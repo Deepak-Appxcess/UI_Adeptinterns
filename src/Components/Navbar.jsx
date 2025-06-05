@@ -67,16 +67,38 @@ function Navbar({ isDarkMode, toggleTheme, isAuthenticated, onLogout }) {
               </button>
             </>
           ) : (
-            <Link 
-              to="/login" 
-              className={`px-4 py-2 rounded-full text-sm ${
-                isDarkMode 
-                  ? 'bg-black text-white hover:bg-black/90' 
-                  : 'bg-white text-black hover:bg-white/90'
-              } transition-colors`}
-            >
-              Login
-            </Link>
+            <>
+              <Link 
+                to="/login" 
+                className={`px-4 py-2 rounded-full text-sm ${
+                  isDarkMode 
+                    ? 'bg-black text-white hover:bg-black/90' 
+                    : 'bg-white text-black hover:bg-white/90'
+                } transition-colors`}
+              >
+                Login
+              </Link>
+              <Link 
+                to="/student" 
+                className={`px-4 py-2 rounded-full text-sm ${
+                  isDarkMode 
+                    ? 'bg-black text-white hover:bg-black/90' 
+                    : 'bg-white text-black hover:bg-white/90'
+                } transition-colors`}
+              >
+                Register
+              </Link>
+              <Link 
+                to="/employers" 
+                className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                  isDarkMode 
+                    ? 'border-black/10 text-black hover:bg-black/5' 
+                    : 'border-white/10 text-white hover:bg-white/5'
+                }`}
+              >
+                For Employers
+              </Link>
+            </>
           )}
         </div>
       </div>
