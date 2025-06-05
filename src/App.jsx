@@ -1,0 +1,636 @@
+import { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom'
+import './App.css'
+import StackingCard from './Components/StackingCard'
+import Footer from './Components/Footer'
+import Navbar from './Components/Navbar'
+import Jobs from './pages/Jobs'
+import Internships from './pages/Internships'
+import Courses from './pages/Courses/Courses'
+import EmployeeRegister from './pages/Employee_Function/EmployeeRegister'
+import Login from './pages/Login/Login'
+import CourseDetails from './pages/Courses/CourseDetails'
+import EmployeeDashboard from './pages/Dashboard/Employee/Dashboard'
+import PostInternships from './pages/Dashboard/Employee/PostInternship'
+import PostJob from './pages/Dashboard/Employee/PostJob'
+import MyInternships from './pages/Dashboard/Employee/MyInternships'
+import MyJobs from './pages/Dashboard/Employee/MyJobs'
+import Employeeprofile from './pages/Dashboard/Employee/Profile'
+import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
+import axios from 'axios';
+import { fetchCourses } from './services/api'; // Adjust path if needed
+import api from './services/api';
+
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+function App() {
+  const [isDarkMode, setIsDarkMode] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('All')
+  const [selectedLocation, setSelectedLocation] = useState('All Locations')
+  const [selectedSalary, setSelectedSalary] = useState('All Salaries')
+  const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+ useEffect(() => {
+    const getFeaturedCourses = async () => {
+      try {
+        const response = await fetchCourses(); // from api.js
+        const courses = response.data.data.slice(0, 3); // first 3 featured
+        setFeaturedCourses(courses);
+      } catch (error) {
+        console.error('Error fetching featured courses:', error);
+      }
+    };
+
+    getFeaturedCourses();
+  }, []);
+
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setIsAuthenticated(false);
+  };
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode)
+  }
+
+  const filters = [
+    'All',
+    'Engineering',
+    'Media',
+    'Design',
+    'Data Science',
+    'Most Popular',
+    'IIT Madras Pravartak Certified',
+    'Programming',
+    'Business & Management',
+    'Core Engineering',
+    'Creative Arts',
+    'Language',
+    'Career Development'
+  ]
+
+  const locations = [
+    'All Locations',
+    'Delhi',
+    'Bangalore',
+    'Mumbai',
+    'Pune',
+    'Hyderabad',
+    'Remote'
+  ]
+
+  const salaryRanges = [
+    'All Salaries',
+    'Below ₹5L',
+    '₹5L - ₹10L',
+    '₹10L - ₹15L',
+    '₹15L - ₹20L',
+    'Above ₹20L'
+  ]
+
+  const featuredJobs = [
+    {
+      title: 'Product Designer (UI, Visual Design)',
+      company: 'SnapFind',
+      location: 'Delhi',
+      salary: '₹11,00,000 - 15,00,000 /year',
+      isActive: true,
+      category: 'Design',
+      description: 'Join our dynamic team to create innovative user experiences and shape the future of digital products.'
+    },
+    {
+      title: 'Sales Associate',
+      company: 'PlanetSpark',
+      location: 'Delhi, Pune, Bangalore',
+      salary: '₹6,50,000 - 7,50,000 /year',
+      isActive: true,
+      category: 'Business & Management',
+      description: 'Drive business growth through strategic sales initiatives and client relationship management.'
+    },
+    {
+      title: 'Software Engineer',
+      company: 'TechCorp',
+      location: 'Bangalore',
+      salary: '₹8,00,000 - 12,00,000 /year',
+      isActive: true,
+      category: 'Engineering',
+      description: 'Build scalable applications using cutting-edge technologies in a collaborative environment.'
+    }
+  ]
+
+  const getSalaryRange = (salary) => {
+    const amount = parseInt(salary.match(/\d+/g)[0])
+    if (amount < 500000) return 'Below ₹5L'
+    if (amount < 1000000) return '₹5L - ₹10L'
+    if (amount < 1500000) return '₹10L - ₹15L'
+    if (amount < 2000000) return '₹15L - ₹20L'
+    return 'Above ₹20L'
+  }
+
+  const filteredJobs = featuredJobs.filter(job => {
+    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         job.company.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFilter = selectedFilter === 'All' || job.category === selectedFilter
+    const matchesLocation = selectedLocation === 'All Locations' || job.location.includes(selectedLocation)
+    const matchesSalary = selectedSalary === 'All Salaries' || getSalaryRange(job.salary) === selectedSalary
+    return matchesSearch && matchesFilter && matchesLocation && matchesSalary
+  })
+
+  return (
+    <Router>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-gray-100'} transition-colors duration-300`}>
+        <div className={`${isDarkMode ? 'bg-black border-white/10' : 'bg-white border-black/10'} rounded-[48px] min-h-[calc(100vh-2rem)] overflow-hidden border transition-colors duration-300`}>
+          <Navbar 
+            isDarkMode={isDarkMode} 
+            toggleTheme={toggleTheme} 
+            isAuthenticated={isAuthenticated}
+            onLogout={handleLogout}
+          />
+
+          <Routes>
+            <Route path="/" element={
+              <Home 
+                isDarkMode={isDarkMode} 
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedFilter={selectedFilter}
+                setSelectedFilter={setSelectedFilter}
+                selectedLocation={selectedLocation}
+                setSelectedLocation={setSelectedLocation}
+                selectedSalary={selectedSalary}
+                setSelectedSalary={setSelectedSalary}
+                filters={filters}
+                locations={locations}
+                salaryRanges={salaryRanges}
+                filteredJobs={filteredJobs}
+                featuredCourses={featuredCourses}
+                isAuthenticated={isAuthenticated}
+              />
+            } />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/internships" element={<Internships />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route 
+              path="/dashboard/employee" 
+              element={
+                <ProtectedRoute>
+                  <EmployeeDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="/courses/:id" element={<CourseDetails />} />
+            <Route path="/employers" element={<EmployeeRegister/>} />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Employeeprofile />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/post-internship" element={
+              <ProtectedRoute>
+                <PostInternships />
+              </ProtectedRoute>
+            } />
+            <Route path="/post-job" element={
+              <ProtectedRoute>
+                <PostJob />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-internships" element={
+              <ProtectedRoute>
+                <MyInternships />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-jobs" element={
+              <ProtectedRoute>
+                <MyJobs />
+              </ProtectedRoute>
+            } />
+          </Routes>
+
+          <Footer isDarkMode={isDarkMode} />
+        </div>
+      </div>
+    </Router>
+  );
+}
+
+function Home({ 
+  isDarkMode, 
+  searchQuery, 
+  setSearchQuery, 
+  selectedFilter, 
+  setSelectedFilter,
+  selectedLocation,
+  setSelectedLocation,
+  selectedSalary,
+  setSelectedSalary,
+  filters,
+  locations,
+  salaryRanges,
+  filteredJobs,
+  featuredCourses,
+  isAuthenticated
+}) {
+  const featuredInternships = [
+    {
+      title: 'Human Resources (HR)',
+      company: 'NotBroker',
+      location: 'Bangalore',
+      duration: '4 Months',
+      stipend: '₹10,000 - 13,000 /month',
+      description: 'Gain hands-on experience in talent acquisition, employee engagement, and HR operations.'
+    },
+    {
+      title: 'Law/Legal',
+      company: 'American Oncology Institute',
+      location: 'Bangalore',
+      duration: '2 Months',
+      stipend: 'Unpaid',
+      description: 'Work on real legal cases and learn from experienced professionals in healthcare law.'
+    },
+    {
+      title: 'Software Development',
+      company: 'TechStart',
+      location: 'Remote',
+      duration: '6 Months',
+      stipend: '₹15,000 - 20,000 /month',
+      description: 'Build real-world applications using modern technologies and best practices.'
+    }
+  ]
+
+  return (
+    <main className="container mx-auto px-4 md:px-8">
+      {/* Hero Section with ShaderGradient */}
+      <div className="relative">
+        {/* ShaderGradient Canvas */}
+        <div className="absolute inset-0 z-0">
+          <ShaderGradientCanvas
+            style={{ width: '100%', height: '100vh' }}
+            lazyLoad={undefined}
+            fov={100}
+            pixelDensity={1}
+            pointerEvents="none"
+          >
+            <ShaderGradient
+              animate="on"
+              type="sphere"
+              wireframe={false}
+              shader="defaults"
+              uTime={4.7}
+              uSpeed={0.34}
+              uStrength={1.1}
+              uDensity={2}
+              uFrequency={3.8}
+              uAmplitude={0}
+              positionX={-0.7}
+              positionY={-0.4}
+              positionZ={1.6}
+              rotationX={-10}
+              rotationY={0}
+              rotationZ={-60}
+              color1="#0054ff"
+              color2="#ff000d"
+              color3="#e5ce02"
+              reflection={0.75}
+              cAzimuthAngle={154}
+              cPolarAngle={80}
+              cDistance={2.8}
+              cameraZoom={9.1}
+              lightType="env"
+              brightness={0}
+              envPreset="dawn"
+              grain="off"
+              toggleAxis={false}
+              zoomOut={false}
+              hoverState=""
+              enableTransition={false}
+            />
+          </ShaderGradientCanvas>
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 py-8 md:py-16">
+          <div className="flex flex-col justify-center">
+            <h1 className={`text-4xl md:text-7xl font-bold mb-4 md:mb-6 leading-tight ${isDarkMode ? 'text-white' : 'text-black'}`}>
+              Learn & Grow<br />with AdeptInterns.
+            </h1>
+            <p className={`text-base md:text-lg mb-6 md:mb-8 ${isDarkMode ? 'text-white/80' : 'text-black/80'}`}>
+              Unlock thousands of expert-led courses<br />in tech, business, design, and more.
+            </p>
+            <div>
+              <Link 
+                to={isAuthenticated ? "/dashboard/employee" : "/login"}
+                className={`${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'} px-6 md:px-8 py-2 md:py-3 rounded-full flex items-center text-sm`}
+              >
+                {isAuthenticated ? "Go to Dashboard" : "Get Started"}
+                <span className="ml-2">→</span>
+              </Link>
+            </div>
+            
+            {/* App Download Section */}
+            <div className={`mt-8 md:mt-16 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded-[24px] md:rounded-[32px] p-4 md:p-6 inline-block`}>
+              <p className={`mb-4 text-sm ${isDarkMode ? 'text-black' : 'text-white'}`}>
+               The premier platform delivering authentic work <br />experience—accessible from anywhere in the world.
+              </p>
+              <div className="flex space-x-3">
+                <button className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-3 rounded-full`}>
+                  <img src="https://images.pexels.com/photos/5741606/pexels-photo-5741606.jpeg" alt="Apple Store" className="w-5 h-5 object-cover rounded-full" />
+                </button>
+                <button className={`${isDarkMode ? 'bg-black' : 'bg-white'} p-3 rounded-full`}>
+                  <img src="https://images.pexels.com/photos/5741606/pexels-photo-5741606.jpeg" alt="Play Store" className="w-5 h-5 object-cover rounded-full" />
+                </button>
+              </div>
+            </div>
+          </div>
+           
+          {/* Right Side with Phone */}
+          <div className="relative mt-8 md:mt-0">
+            <div className="absolute top-0 right-0 w-full md:w-[500px] h-[300px] md:h-[500px] bg-gradient-to-br from-[#FF1F6D] via-[#FF758C] to-[#FF7EB3] rounded-full blur-[80px] md:blur-[120px] opacity-30"></div>
+            <div className="relative z-10 h-[400px] md:h-[600px]">
+              <StackingCard isDarkMode={isDarkMode} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Featured Jobs Section */}
+      <section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl md:text-4xl font-bold">Featured Jobs</h2>
+          <Link to="/jobs" className="text-blue-500 hover:text-blue-600">View all →</Link>
+        </div>
+
+        {/* Search and Filter Container */}
+        <div className="mb-8">
+          {/* Search Bar and Dropdowns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* Search Bar */}
+            <input
+              type="text"
+              placeholder="Search jobs by title or company..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full px-4 py-2 rounded-lg ${
+                isDarkMode 
+                  ? 'bg-white/5 text-white border-white/10' 
+                  : 'bg-blue/5 text-black border-black/10'
+              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            />
+
+            {/* Location Dropdown */}
+            <select
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+              className={`w-full px-4 py-2 rounded-lg ${
+                isDarkMode 
+                  ? 'bg-white/5 text-white border-white/10' 
+                  : 'bg-blue/5 text-black border-black/10'
+              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            >
+              {locations.map(location => (
+                <option key={location} value={location}>{location}</option>
+              ))}
+            </select>
+
+            {/* Salary Range Dropdown */}
+            <select
+              value={selectedSalary}
+              onChange={(e) => setSelectedSalary(e.target.value)}
+              className={`w-full px-4 py-2 rounded-lg ${
+                isDarkMode 
+                  ? 'bg-white/5 text-white border-white/10' 
+                  : 'bg-black/5 text-black border-black/10'
+              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            >
+              {salaryRanges.map(range => (
+                <option key={range} value={range}>{range}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Category Filters */}
+          <div className="overflow-x-auto">
+            <div className="flex space-x-2 pb-2">
+              {filters.map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSelectedFilter(filter)}
+                  className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+                    selectedFilter === filter
+                      ? isDarkMode
+                        ? 'bg-white text-black'
+                        : 'bg-black text-white'
+                      : isDarkMode
+                      ? 'bg-white/10 text-white'
+                      : 'bg-black/10 text-black'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Job Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {filteredJobs.map((job, index) => (
+            <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
+              {job.isActive && (
+                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mb-2">
+                  Actively hiring
+                </span>
+              )}
+              <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
+              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>{job.company}</p>
+              <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>{job.location}</p>
+              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>{job.salary}</p>
+              <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>{job.description}</p>
+              <button className="text-blue-500 hover:text-blue-600">View details →</button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Internships Section */}
+      <section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl md:text-4xl font-bold">Featured Internships</h2>
+          <Link to="/internships" className="text-blue-500 hover:text-blue-600">View all →</Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {featuredInternships.map((internship, index) => (
+            <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
+              <h3 className="text-xl font-semibold mb-2">{internship.title}</h3>
+              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>{internship.company}</p>
+              <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>{internship.location}</p>
+              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>Duration: {internship.duration}</p>
+              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>Stipend: {internship.stipend}</p>
+              <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>{internship.description}</p>
+              <button className="text-blue-500 hover:text-blue-600">View details →</button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Courses Section */}
+    <section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl md:text-4xl font-bold">Featured Courses</h2>
+        <Link to="/courses" className="text-blue-500 hover:text-blue-600">
+          View all →
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {featuredCourses.map((course) => {
+          const content = typeof course.content === 'string'
+            ? JSON.parse(course.content)
+            : course.content;
+
+          const imageURL = `${api.defaults.baseURL}/adept/${course._id}/image`;
+
+          return (
+            <div
+              key={course._id}
+              className={`${
+                isDarkMode ? 'bg-white/5' : 'bg-black/5'
+              } rounded-xl p-6 hover:scale-[1.02] transition-transform`}
+            >
+              <div className="h-48 rounded-lg overflow-hidden mb-4">
+                <img
+                  src={imageURL}
+                  alt={content?.courseTitle || 'Course image'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src =
+                      'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg';
+                  }}
+                />
+              </div>
+
+              <h3 className="text-xl font-semibold mb-2">
+                {content?.courseTitle || 'Untitled Course'}
+              </h3>
+
+              <p
+                className={`${
+                  isDarkMode ? 'text-white/70' : 'text-black/70'
+                } mb-4 text-sm line-clamp-3`}
+              >
+                {content?.summary || 'No summary available.'}
+              </p>
+
+              <Link
+                to={`/courses/${course._id}`}
+                className="text-blue-500 hover:text-blue-600"
+              >
+                Know more →
+              </Link>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+
+      {/* Career Impact Section with Gradient Background */}
+      <section className="py-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#ff005b]/10 via-[#ffe53b]/10 to-[#00EAFA]/10 opacity-50"></div>
+        <div className="relative z-10">
+          <div className="text-center mb-12">
+            <h2 className={`text-4xl md:text-5xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+              Launch Your Career with AdeptInterns
+            </h2>
+            <p className={`text-lg md:text-xl ${isDarkMode ? 'text-white/80' : 'text-black/80'} max-w-3xl mx-auto`}>
+              Discover global internship opportunities from the comfort of your home. Gain hands-on experience, refine your skill set, and unlock a world of future possibilities.
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
+            {[
+              { number: '500K+', label: 'Global Internship Impact' },
+              { number: '800+', label: 'Global Reach & Diversity' },
+              { number: '10+', label: 'Career Coaching Sessions' },
+              { number: '2 in 1', label: 'Internship Success' }
+            ].map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className={`text-3xl md:text-4xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  {stat.number}
+                </div>
+                <div className={`${isDarkMode ? 'text-white/80' : 'text-black/80'}`}>
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Features Grid with Gradient Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: 'Global Internship Access',
+                description: 'Work with leading companies across the globe and gain valuable remote experience—regardless of your physical location.',
+                gradient: 'from-[#ff005b]/5 to-[#ffe53b]/5'
+              },
+              {
+                title: 'Gain Real-World Skills',
+                description: 'Enhance your professional capabilities through practical, project-based learning aligned with your career aspirations.',
+                gradient: 'from-[#ffe53b]/5 to-[#0014FF]/5'
+              },
+              {
+                title: 'Track Your Progress',
+                description: 'Monitor your development with performance insights and constructive feedback from dedicated mentors.',
+                gradient: 'from-[#0014FF]/5 to-[#00EAFA]/5'
+              },
+              {
+                title: 'Seamless Communication Tools',
+                description: 'Engage with mentors and peers using integrated video conferencing and collaboration platforms.',
+                gradient: 'from-[#ff005b]/5 to-[#00EAFA]/5'
+              },
+              {
+                title: 'Real Career Opportunities',
+                description: 'Make a lasting impression—many of our internships lead to full-time employment with top-tier organizations.',
+                gradient: 'from-[#ffe53b]/5 to-[#0014FF]/5'
+              }
+            ].map((feature, index) => (
+              <div 
+                key={index} 
+                className={`p-6 rounded-xl bg-gradient-to-br ${feature.gradient} backdrop-blur-sm ${
+                  isDarkMode ? 'bg-white/5' : 'bg-black/5'
+                }`}
+              >
+                <h4 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  {feature.title}
+                </h4>
+                <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'}`}>
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default App
