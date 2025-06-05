@@ -6,6 +6,7 @@ const api = axios.create({
   baseURL: 'https://6cde-103-186-151-195.ngrok-free.app/api/users',
   withCredentials: true,
   headers: {
+    
     'Content-Type': 'application/json'
   }
 });
@@ -73,7 +74,7 @@ export const verifyToken = (token) => api.post('/token/verify/', { token });
 // Registration endpoints
 export const registerUser = (data) => api.post('/register/', data);
 export const verifyOTP = (data) => api.post('/verify-otp/', data);
-export const resendOTP = (data) => api.post('/send-otp/', data);
+export const resendOTP = (data) => api.post('/resend-otp/', data);
 export const checkEmailExists = (email) => api.post('/check-email/', { email });
 
 // ================= User Profile Endpoints =================

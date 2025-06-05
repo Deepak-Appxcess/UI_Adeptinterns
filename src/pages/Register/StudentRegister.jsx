@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Loader2, X, Mail, User, Phone, ArrowLeft, Check } from 'lucide-react';
-import { checkEmailExists, registerUser, verifyOTP, resendOTP } from '../../services/api';
+import { registerUser, verifyOTP, resendOTP } from '../../services/api';
 
 const StudentRegister = () => {
   const [emailStatus, setEmailStatus] = useState({
@@ -28,6 +28,8 @@ const StudentRegister = () => {
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
   const [showOtpForm, setShowOtpForm] = useState(false);
+  const [otpMessage, setOtpMessage] = useState('');
+
   const [otpResent, setOtpResent] = useState(false);
   const [resendDisabled, setResendDisabled] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
@@ -192,25 +194,40 @@ const StudentRegister = () => {
     }
   };
 
-  const handleResendOtp = async () => {
-    try {
-      setResendDisabled(true);
-      await resendOTP({ email: formData.email });
+const handleResendOtp = async () => {
+  try {
+    setResendDisabled(true);
+    const response = await resendOTP({ email: formData.email });
+
+    if (response.data?.message) {
+      setOtpMessage(response.data.message);
+      setOtpError('');
       setOtpResent(true);
-      setTimeout(() => setOtpResent(false), 3000);
-    } catch (error) {
-      console.error('Resend OTP error:', error);
-      if (error.response) {
-        setOtpError(error.response.data.detail || 
-                   error.response.data.message || 
-                   'Failed to resend OTP');
-      } else {
-        setOtpError('Network error. Please check your connection.');
-      }
-    } finally {
-      setResendDisabled(false);
+      setTimeout(() => {
+        setOtpResent(false);
+        setOtpMessage('');
+      }, 3000);
     }
-  };
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    let backendMessage = 'Network error. Please check your connection.';
+
+    if (error.response) {
+      backendMessage =
+        error.response.data.detail ||
+        error.response.data.error ||
+        error.response.data.message ||
+        backendMessage;
+    }
+
+    setOtpError(backendMessage);
+    setOtpMessage('');
+  } finally {
+    setResendDisabled(false);
+  }
+};
+
+
 
   const handleBackToRegister = () => {
     setShowOtpForm(false);
@@ -239,12 +256,17 @@ const StudentRegister = () => {
               <span className="font-medium">{formData.email}</span>
             </p>
             
-            {otpResent && (
-              <div className="mb-4 p-2 bg-green-100 text-green-700 text-sm rounded text-center">
-                OTP has been resent successfully
-              </div>
-            )}
-            
+           {otpMessage && (
+  <div className="mb-4 p-2 bg-green-100 text-green-700 text-sm rounded text-center">
+    {otpMessage}
+  </div>
+)}
+{otpError && (
+  <div className="mb-4 p-2 bg-red-100 text-red-700 text-sm rounded text-center">
+    {otpError}
+  </div>
+)}
+
             <form onSubmit={handleOtpSubmit} className="space-y-4">
               <div>
                 <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
@@ -262,9 +284,7 @@ const StudentRegister = () => {
                   }`}
                   maxLength={6}
                 />
-                {otpError && (
-                  <p className="mt-1 text-sm text-red-600">{otpError}</p>
-                )}
+               
               </div>
               
               <button
