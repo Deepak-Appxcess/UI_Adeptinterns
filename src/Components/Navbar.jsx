@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, LogOut } from 'lucide-react';
 import Login from "../pages/Login/Login";
 
 function Navbar({ isDarkMode, toggleTheme, isAuthenticated, onLogout }) {
@@ -43,45 +42,66 @@ function Navbar({ isDarkMode, toggleTheme, isAuthenticated, onLogout }) {
                   to="/dashboard/employee" 
                   className={`px-4 py-2 rounded-full text-sm ${
                     isDarkMode 
-                      ? 'bg-black text-white hover:bg-black/90' 
-                      : 'bg-white text-black hover:bg-white/90'
-                  } transition-colors`}
+                      ? 'bg-black text-white' 
+                      : 'bg-white text-black'
+                  }`}
                 >
                   Dashboard
                 </Link>
                 <Link 
                   to="/profile" 
-                  className={`p-2 rounded-full ${
+                  className={`px-4 py-2 rounded-full text-sm ${
                     isDarkMode 
-                      ? 'bg-black text-white hover:bg-black/90' 
-                      : 'bg-white text-black hover:bg-white/90'
-                  } transition-colors`}
+                      ? 'bg-black text-white' 
+                      : 'bg-white text-black'
+                  }`}
                 >
-                  <User className="w-5 h-5" />
+                  Profile
                 </Link>
                 <button 
                   onClick={handleLogout}
-                  className={`px-4 py-2 rounded-full text-sm flex items-center gap-2 ${
+                  className={`px-4 py-2 rounded-full text-sm border ${
                     isDarkMode 
-                      ? 'border border-black/10 text-black hover:bg-black/5' 
-                      : 'border border-white/10 text-white hover:bg-white/5'
-                  } transition-colors`}
+                      ? 'border-black/10 text-black/80' 
+                      : 'border-white/10 text-white/80'
+                  }`}
                 >
-                  <LogOut className="w-4 h-4" />
                   Logout
                 </button>
               </>
             ) : (
-              <button 
-                onClick={() => setShowLoginPopup(true)}
-                className={`px-6 py-2 rounded-full text-sm font-medium ${
-                  isDarkMode 
-                    ? 'bg-black text-white hover:bg-black/90' 
-                    : 'bg-white text-black hover:bg-white/90'
-                } transition-colors`}
-              >
-                Login
-              </button>
+              <>
+                <button 
+                  onClick={() => setShowLoginPopup(true)}
+                  className={`px-4 py-2 rounded-full text-sm ${
+                    isDarkMode 
+                      ? 'bg-black text-white' 
+                      : 'bg-white text-black'
+                  }`}
+                >
+                  Login
+                </button>
+                <Link 
+                  to="/student" 
+                  className={`px-4 py-2 rounded-full text-sm ${
+                    isDarkMode 
+                      ? 'bg-black text-white' 
+                      : 'bg-white text-black'
+                  } font-medium`}
+                >
+                  Register
+                </Link>
+                <Link 
+                  to="/employers" 
+                  className={`px-4 py-2 rounded-full text-sm border ${
+                    isDarkMode 
+                      ? 'border-black/10 text-black/80' 
+                      : 'border-white/10 text-white/80'
+                  }`}
+                >
+                  For Employers
+                </Link>
+              </>
             )}
           </div>
         </div>
