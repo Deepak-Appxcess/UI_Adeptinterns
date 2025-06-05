@@ -7,10 +7,15 @@ import Navbar from './Components/Navbar'
 import Jobs from './pages/Jobs'
 import Internships from './pages/Internships'
 import Courses from './pages/Courses/Courses'
-import EmployeeRegister from './pages/Employee_Function/EmployeeRegister'
+
+import EmployeeRegister from './pages/Register/EmployeeRegister'
+import StudentRegister from './pages/Register/StudentRegister'
+
+
 import Login from './pages/Login/Login'
 import CourseDetails from './pages/Courses/CourseDetails'
 import EmployeeDashboard from './pages/Dashboard/Employee/Dashboard'
+import StudentDashboard from './pages/Dashboard/Student/StudentDashboard'
 import PostInternships from './pages/Dashboard/Employee/PostInternship'
 import PostJob from './pages/Dashboard/Employee/PostJob'
 import MyInternships from './pages/Dashboard/Employee/MyInternships'
@@ -194,8 +199,17 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/dashboard/student" 
+              element={
+                <ProtectedRoute>
+                  <StudentDashboard/>
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/courses/:id" element={<CourseDetails />} />
             <Route path="/employers" element={<EmployeeRegister/>} />
+            <Route path="/student" element={<StudentRegister/>} />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Employeeprofile />

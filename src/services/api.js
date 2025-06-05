@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: 'https://03df-2401-4900-8826-5329-8985-f5e9-e3a4-aff3.ngrok-free.app/api',
+  baseURL: 'http://localhost:8000/api/users',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -13,7 +13,8 @@ const api = axios.create({
 // Request interceptor to add auth token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken') || 
+                 sessionStorage.getItem('tempAuthToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -54,6 +55,7 @@ api.interceptors.response.use(
         // If refresh fails, clear tokens and redirect to login
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('tempAuthToken');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -63,12 +65,36 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API endpoints
+// ================= Auth API Endpoints =================
 export const login = (credentials) => api.post('/token/', credentials);
 export const refreshToken = (refresh) => api.post('/token/refresh/', { refresh });
 export const verifyToken = (token) => api.post('/token/verify/', { token });
 
-// Course API endpoints
+// Registration endpoints
+export const registerUser = (data) => api.post('/register/', data);
+export const verifyOTP = (data) => api.post('/verify-otp/', data);
+export const resendOTP = (data) => api.post('/send-otp/', data);
+export const checkEmailExists = (email) => api.post('/check-email/', { email });
+
+// ================= User Profile Endpoints =================
+export const fetchUserProfile = () => api.get('/profile/');
+export const updateUserProfile = (data) => api.put('/profile/', data);
+
+// ================= Candidate (Student) Endpoints =================
+export const fetchCandidateProfile = () => api.get('/candidate/profile/');
+export const updateCandidateBio = (data) => api.put('/candidate/bio/', data);
+export const updateCandidatePreferences = (data) => api.put('/candidate/preferences/', data);
+export const fetchAppliedJobs = () => api.get('/candidate/applications/jobs/');
+export const fetchAppliedInternships = () => api.get('/candidate/applications/internships/');
+
+// ================= Employer Endpoints =================
+export const fetchEmployerProfile = () => api.get('/employer/profile/');
+export const fetchMyInternships = () => api.get('/employer/my-internships/');
+export const fetchMyJobs = () => api.get('/employer/my-jobs/');
+export const createInternship = (data) => api.post('/employer/post-internship/', data);
+export const createJob = (data) => api.post('/employer/post-job/', data);
+
+// ================= Course Endpoints =================
 export const fetchCourses = (query = '') => {
   const url = query 
     ? `/adept/search?query=${encodeURIComponent(query)}`
@@ -76,8 +102,8 @@ export const fetchCourses = (query = '') => {
   return api.get(url);
 };
 
-export const fetchCourseById = (id) => api.get(`/adept/${id}`);
-export const fetchCourseImage = (id) => api.get(`/adept/${id}/image`, {
+export const fetchCourseById = (id) => api.get(`/adept/${id}/`);
+export const fetchCourseImage = (id) => api.get(`/adept/${id}/image/`, {
   responseType: 'blob'
 });
 
@@ -95,30 +121,7 @@ export const createCourse = (data) => {
   });
 };
 
-export const updateCourse = (id, data) => api.patch(`/adept/${id}`, data);
-export const deleteCourse = (id) => api.delete(`/adept/${id}`);
-
-// Employee API endpoints
-export const fetchMyInternships = () => api.get('/employee/my-internships');
-export const fetchMyJobs = () => api.get('/employee/my-jobs');
-
-export const createInternship = (data) => api.post('/employee/post-internship', data);
-export const updateInternship = (id, data) => api.put(`/employee/my-internships/${id}`, data);
-export const deleteInternship = (id) => api.delete(`/employee/my-internships/${id}`);
-
-export const createJob = (data) => api.post('/employee/post-job', data);
-export const updateJob = (id, data) => api.put(`/employee/post-job/${id}`, data);
-export const deleteJob = (id) => api.delete(`/employee/post-job/${id}`);
-
-// Student API endpoints
-export const fetchStudentProfile = () => api.get('/student/profile');
-export const updateStudentProfile = (data) => api.put('/student/profile', data);
-export const fetchAppliedJobs = () => api.get('/student/applications/jobs');
-export const fetchAppliedInternships = () => api.get('/student/applications/internships');
-
-
-// Add to your existing api.js
-// Add to src/services/api.js
-export const checkEmailExists = (email) => api.post('/users/check-email/', { email });
+export const updateCourse = (id, data) => api.patch(`/adept/${id}/`, data);
+export const deleteCourse = (id) => api.delete(`/adept/${id}/`);
 
 export default api;

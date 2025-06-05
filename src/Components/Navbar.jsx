@@ -82,7 +82,7 @@ function Navbar({ isDarkMode, toggleTheme, isAuthenticated, onLogout }) {
                   Login
                 </button>
                 <Link 
-                  to="/register" 
+                  to="/student" 
                   className={`px-4 py-2 rounded-full text-sm ${
                     isDarkMode 
                       ? 'bg-black text-white' 
