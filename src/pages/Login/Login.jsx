@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
-import { login } from '../../services/api';  // Add this import
+import { login } from '../../services/api';
 
 const LoginPopup = ({ onClose }) => {
   const [email, setEmail] = useState('');
@@ -22,41 +22,40 @@ const LoginPopup = ({ onClose }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  try {
-    // Use the centralized login function from api.js
-    const { data } = await login({ email, password });
+    try {
+      const { data } = await login({ email, password });
 
-    // Store both access and refresh tokens
-    localStorage.setItem('authToken', data.access);
-    localStorage.setItem('refreshToken', data.refresh);
-    
-    // Dispatch storage event to notify other components
-    window.dispatchEvent(new Event('storage'));
-    
-    onClose?.();
-    
-    // Navigate based on user type
-    if (isStudent) {
-      navigate('/dashboard/student');
-    } else {
-      navigate('/dashboard/employee');
+      // Store tokens
+      if (rememberMe) {
+        localStorage.setItem('authToken', data.access);
+        localStorage.setItem('refreshToken', data.refresh);
+      } else {
+        sessionStorage.setItem('authToken', data.access);
+        sessionStorage.setItem('refreshToken', data.refresh);
+      }
+      
+      // Dispatch storage event to notify other components
+      window.dispatchEvent(new Event('storage'));
+      
+      onClose?.();
+      
+      // Navigate based on user type
+      navigate(isStudent ? '/dashboard/student' : '/dashboard/employee');
+    } catch (err) {
+      console.error('Login error:', err);
+      const errorMsg = err.response?.data?.detail || 
+                      err.response?.data?.message || 
+                      'Invalid email or password';
+      setError(errorMsg);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error('Login error:', err);
-    const errorMsg = err.response?.data?.detail || 
-                     err.response?.data?.message || 
-                     'Login failed. Please check your credentials.';
-
-    setError(errorMsg);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleClose = (e) => {
     if (e.target === e.currentTarget) {
@@ -81,7 +80,6 @@ const handleSubmit = async (e) => {
           className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Rest of the JSX remains the same */}
           <div className="flex justify-between items-center mb-6">
             <motion.h2 
               initial={{ x: -10, opacity: 0 }}
@@ -125,25 +123,6 @@ const handleSubmit = async (e) => {
             >
               Employer / T&P
             </motion.button>
-          </div>
-
-          <motion.button 
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="w-full mb-4 py-2.5 px-4 border border-gray-200 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-50 transition-all"
-          >
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" 
-              alt="Google logo" 
-              className="h-5 w-5"
-            />
-            <span className="text-sm font-medium">Continue with Google</span>
-          </motion.button>
-
-          <div className="flex items-center mb-6">
-            <div className="flex-1 border-t border-gray-200"></div>
-            <span className="mx-3 text-gray-400 text-xs">OR</span>
-            <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
           <motion.form 
@@ -240,18 +219,6 @@ const handleSubmit = async (e) => {
               )}
             </motion.button>
           </motion.form>
-
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mt-6 text-center text-sm text-gray-500"
-          >
-            Don't have an account?{' '}
-            <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-              Sign up
-            </a>
-          </motion.div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
