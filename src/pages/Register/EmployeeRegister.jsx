@@ -28,3 +28,5 @@ const handleOtpSubmit = async (e) => {
     setIsSubmitting(false);
   }
 };
+
+export default handleOtpSubmit

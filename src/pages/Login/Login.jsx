@@ -29,3 +29,5 @@ const handleSubmit = async (e) => {
     setIsLoading(false);
   }
 };
+
+export default handleSubmit
