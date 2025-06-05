@@ -3,10 +3,10 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'https://6cde-103-186-151-195.ngrok-free.app/api/users',
+  baseURL: 'https://challenged-latest-mexican-labs.trycloudflare.com/api/users',
   withCredentials: true,
   headers: {
-    
+      
     'Content-Type': 'application/json'
   }
 });
@@ -78,7 +78,7 @@ export const resendOTP = (data) => api.post('/resend-otp/', data);
 export const checkEmailExists = (email) => api.post('/check-email/', { email });
 
 // ================= User Profile Endpoints =================
-export const fetchUserProfile = () => api.get('/profile/');
+// export const fetchUserProfile = () => api.get('/profile/');
 export const updateUserProfile = (data) => api.put('/profile/', data);
 
 // ================= Candidate (Student) Endpoints =================
