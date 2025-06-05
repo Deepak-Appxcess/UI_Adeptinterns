@@ -1,15 +1,66 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Login from "../pages/Login/Login";
+import { logout } from '../services/api'; // Import the logout function
 
-function Navbar({ isDarkMode, toggleTheme, isAuthenticated, onLogout }) {
+function Navbar({ isDarkMode, toggleTheme }) {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    onLogout?.();
-    navigate('/');
+  // Check auth status on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = () => {
+    const token = localStorage.getItem('authToken') || 
+                  JSON.parse(sessionStorage.getItem('tempAuthTokens'))?.access;
+    setIsAuthenticated(!!token);
+    
+    // You might want to fetch user profile here to get the role
+    // For now, we'll just check localStorage
+    const role = localStorage.getItem('userRole');
+    setUserRole(role);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken') || 
+                          JSON.parse(sessionStorage.getItem('tempAuthTokens'))?.refresh;
+      
+      if (refreshToken) {
+        await logout({ refresh: refreshToken });
+      }
+      
+      // Clear all auth data
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userRole');
+      sessionStorage.removeItem('tempAuthTokens');
+      
+      setIsAuthenticated(false);
+      setUserRole(null);
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if API logout fails, clear local tokens
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userRole');
+      sessionStorage.removeItem('tempAuthTokens');
+      setIsAuthenticated(false);
+      setUserRole(null);
+      navigate('/');
+    }
+  };
+
+  // Determine dashboard route based on user role
+  const getDashboardRoute = () => {
+    if (userRole === 'Employer') return '/dashboard/employer';
+    if (userRole === 'Candidate') return '/dashboard/student';
+    return '/dashboard'; // fallback
   };
 
   return (
@@ -39,7 +90,7 @@ function Navbar({ isDarkMode, toggleTheme, isAuthenticated, onLogout }) {
             {isAuthenticated ? (
               <>
                 <Link 
-                  to="/dashboard/employee" 
+                  to={getDashboardRoute()}
                   className={`px-4 py-2 rounded-full text-sm ${
                     isDarkMode 
                       ? 'bg-black text-white' 
@@ -109,7 +160,13 @@ function Navbar({ isDarkMode, toggleTheme, isAuthenticated, onLogout }) {
 
       {/* Login Popup */}
       {showLoginPopup && (
-        <Login onClose={() => setShowLoginPopup(false)} />
+        <Login 
+          onClose={() => setShowLoginPopup(false)} 
+          onLoginSuccess={() => {
+            setShowLoginPopup(false);
+            checkAuthStatus();
+          }} 
+        />
       )}
     </>
   );

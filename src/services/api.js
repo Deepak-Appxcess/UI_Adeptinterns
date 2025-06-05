@@ -125,4 +125,7 @@ export const createCourse = (data) => {
 export const updateCourse = (id, data) => api.patch(`/adept/${id}/`, data);
 export const deleteCourse = (id) => api.delete(`/adept/${id}/`);
 
+// Add to your api.js
+export const logout = (data) => api.post('/logout/', data);
+
 export default api;
