@@ -6,7 +6,6 @@ const api = axios.create({
   baseURL: 'https://rides-cafe-olympus-contamination.trycloudflare.com/api/users',
   withCredentials: true,
   headers: {
-      
     'Content-Type': 'application/json'
   }
 });
