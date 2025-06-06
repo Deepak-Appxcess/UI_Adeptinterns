@@ -17,6 +17,8 @@ import CourseDetails from './pages/Courses/CourseDetails'
 import EmployeeDashboard from './pages/Dashboard/Employee/Dashboard'
 import StudentDashboard from './pages/Dashboard/Student/StudentDashboard'
 import PostInternships from './pages/Dashboard/Employee/PostInternship'
+import StudentBio from './pages/Dashboard/Student/StudentBio'
+import StudentPreferences from './pages/Dashboard/Student/StudentPreferences'
 import PostJob from './pages/Dashboard/Employee/PostJob'
 import MyInternships from './pages/Dashboard/Employee/MyInternships'
 import MyJobs from './pages/Dashboard/Employee/MyJobs'
@@ -210,6 +212,8 @@ function App() {
             <Route path="/courses/:id" element={<CourseDetails />} />
             <Route path="/employers" element={<EmployeeRegister/>} />
             <Route path="/student" element={<StudentRegister/>} />
+            <Route path="/profile/candidate/bio" element={<StudentBio/>} />
+              <Route path="/student/preferences" element={<StudentPreferences />} />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Employeeprofile />

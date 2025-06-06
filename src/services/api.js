@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'https://challenged-latest-mexican-labs.trycloudflare.com/api/users',
+  baseURL: 'https://rides-cafe-olympus-contamination.trycloudflare.com/api/users',
   withCredentials: true,
   headers: {
       
@@ -66,6 +66,16 @@ api.interceptors.response.use(
   }
 );
 
+// Candidate Bio Endpoint ONLY
+export const updateCandidateBio = (formData) => {
+  return api.patch('/profile/candidate/bio/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+    }
+  });
+};
+
 // ================= Auth API Endpoints =================
 export const login = (credentials) => api.post('/token/', credentials);
 export const refreshToken = (refresh) => api.post('/token/refresh/', { refresh });
@@ -83,8 +93,7 @@ export const updateUserProfile = (data) => api.put('/profile/', data);
 
 // ================= Candidate (Student) Endpoints =================
 export const fetchCandidateProfile = () => api.get('/candidate/profile/');
-export const updateCandidateBio = (data) => api.put('/candidate/bio/', data);
-export const updateCandidatePreferences = (data) => api.put('/candidate/preferences/', data);
+export const updateCandidatePreferences = (data) => api.patch('/profile/candidate/preferences/', data);
 export const fetchAppliedJobs = () => api.get('/candidate/applications/jobs/');
 export const fetchAppliedInternships = () => api.get('/candidate/applications/internships/');
 
@@ -121,6 +130,9 @@ export const createCourse = (data) => {
     }
   });
 };
+
+
+
 
 export const updateCourse = (id, data) => api.patch(`/adept/${id}/`, data);
 export const deleteCourse = (id) => api.delete(`/adept/${id}/`);

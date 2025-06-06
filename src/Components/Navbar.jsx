@@ -60,7 +60,7 @@ function Navbar({ isDarkMode, toggleTheme }) {
   const getDashboardRoute = () => {
     if (userRole === 'Employer') return '/dashboard/employer';
     if (userRole === 'Candidate') return '/dashboard/student';
-    return '/dashboard'; // fallback
+    return '/dashboard/student'; // fallback
   };
 
   return (
