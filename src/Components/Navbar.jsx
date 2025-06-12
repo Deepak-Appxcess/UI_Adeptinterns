@@ -12,7 +12,7 @@ function Navbar({ isDarkMode, toggleTheme }) {
   // Check auth status on component mount
   useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, [showLoginPopup]);
 
   const checkAuthStatus = () => {
     const token = localStorage.getItem('authToken') || 
@@ -159,12 +159,14 @@ function Navbar({ isDarkMode, toggleTheme }) {
       </nav>
 
       {/* Login Popup */}
-      {showLoginPopup && (
+   {showLoginPopup && (
         <Login 
           onClose={() => setShowLoginPopup(false)} 
           onLoginSuccess={() => {
+            // Update state immediately
+            setIsAuthenticated(true);
+            setUserRole(localStorage.getItem('userRole'));
             setShowLoginPopup(false);
-            checkAuthStatus();
           }} 
         />
       )}

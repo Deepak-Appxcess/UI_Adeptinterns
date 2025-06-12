@@ -57,7 +57,7 @@ const StudentBio = () => {
     try {
       const response = await updateCandidateBio(data);
       console.log('Bio updated successfully:', response.data);
-      navigate('/student/preference/');
+      navigate('/student/preferences');
     } catch (error) {
       if (error.response && error.response.data) {
         setErrors(error.response.data);

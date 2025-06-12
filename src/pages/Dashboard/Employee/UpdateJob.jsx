@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createJobPosting, fetchEmployerProfile } from '../../../services/api';
+import { useNavigate, useParams } from 'react-router-dom';
+import { updateJobPosting, fetchJobDetails } from '../../../services/api';
 import { toast } from 'react-toastify';
 
-const JobPost = () => {
+const UpdateJob = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [profileComplete, setProfileComplete] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     job_title: '',
     minimum_experience_years: 0,
@@ -28,26 +28,39 @@ const JobPost = () => {
   });
 
   useEffect(() => {
-    const checkProfileCompletion = async () => {
+    const fetchJobData = async () => {
       try {
-        const { data } = await fetchEmployerProfile();
-        if (!data.has_completed_organization && !data.is_freelancer) {
-          setProfileComplete(false);
-          toast.error('Please complete your organization profile before posting jobs');
-          navigate('/profile');
-        } else if (data.is_freelancer && !data.has_completed_freelancer_details) {
-          setProfileComplete(false);
-          toast.error('Please complete your freelancer profile before posting jobs');
-          navigate('/profile');
-        }
+        const { data } = await fetchJobDetails(id);
+        setFormData({
+          job_title: data.job_title,
+          minimum_experience_years: data.minimum_experience_years,
+          skills_required: data.skills_required,
+          job_type: data.job_type,
+          work_schedule: data.work_schedule,
+          number_of_openings: data.number_of_openings,
+          job_description: data.job_description,
+          fixed_pay_min: data.fixed_pay_min,
+          fixed_pay_max: data.fixed_pay_max,
+          incentives_min: data.incentives_min || '',
+          incentives_max: data.incentives_max || '',
+          has_five_day_week: data.has_five_day_week,
+          has_health_insurance: data.has_health_insurance,
+          has_life_insurance: data.has_life_insurance,
+          screening_questions: data.screening_questions,
+          alternate_phone_number: data.alternate_phone_number || '',
+          candidate_preferences: data.candidate_preferences
+        });
       } catch (error) {
-        console.error('Error checking profile:', error);
-        toast.error('Failed to verify profile completion');
+        console.error('Error fetching job details:', error);
+        toast.error('Failed to load job details');
+        navigate('/dashboard/employer');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    checkProfileCompletion();
-  }, [navigate]);
+    fetchJobData();
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -119,27 +132,31 @@ const JobPost = () => {
         screening_questions: formData.screening_questions.filter(q => q.trim() !== '')
       };
 
-      const { data } = await createJobPosting(payload);
-      toast.success('Job posted successfully!');
+      await updateJobPosting(id, payload);
+      toast.success('Job updated successfully!');
       navigate('/dashboard/employer');
     } catch (error) {
-      console.error('Error creating job:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to create job posting';
+      console.error('Error updating job:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to update job posting';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!profileComplete) {
-    return null; // Already redirected to profile
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <div className="bg-white shadow rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">Post a New Job</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-6">Update Job Posting</h1>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Job Title */}
@@ -460,7 +477,7 @@ const JobPost = () => {
               <textarea
                 id="candidate_preferences"
                 name="candidate_preferences"
-                               rows={3}
+                rows={3}
                 value={formData.candidate_preferences}
                 onChange={handleChange}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -469,13 +486,29 @@ const JobPost = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard/employer')}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
                 disabled={isLoading}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Posting...' : 'Post Job'}
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                  </>
+                ) : 'Update Job'}
               </button>
             </div>
           </form>
@@ -485,4 +518,4 @@ const JobPost = () => {
   );
 };
 
-export default JobPost;
+export default UpdateJob;

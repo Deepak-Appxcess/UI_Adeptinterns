@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'https://rides-cafe-olympus-contamination.trycloudflare.com/api/users',
+  baseURL: 'http://localhost:8000/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -40,7 +40,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('No refresh token available');
         
-        const { data } = await axios.post(`${api.defaults.baseURL}/token/refresh/`, {
+        const { data } = await axios.post(`${api.defaults.baseURL}/users/token/refresh/`, {
           refresh: refreshToken
         });
         
@@ -56,7 +56,7 @@ api.interceptors.response.use(
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
         sessionStorage.removeItem('tempAuthToken');
-        window.location.href = '/login';
+        window.location.href = '/users/login';
         return Promise.reject(refreshError);
       }
     }
@@ -67,7 +67,7 @@ api.interceptors.response.use(
 
 // Candidate Bio Endpoint ONLY
 export const updateCandidateBio = (formData) => {
-  return api.patch('/profile/candidate/bio/', formData, {
+  return api.patch('/users/users/profile/candidate/bio/', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -75,39 +75,70 @@ export const updateCandidateBio = (formData) => {
   });
 };
 
+
+
+// Add to api.js
+export const setupEmployerProfile = (formData) => {
+  return api.patch('/users/users/profile/employer/setup/', formData, {
+    headers: {
+      'Content-Type': formData instanceof FormData ? 'multipart/form-data' : 'application/json'
+    }
+  });
+};
+
 // ================= Auth API Endpoints =================
-export const login = (credentials) => api.post('/token/', credentials);
-export const refreshToken = (refresh) => api.post('/token/refresh/', { refresh });
-export const verifyToken = (token) => api.post('/token/verify/', { token });
+export const login = (credentials) => api.post('/users/users/token/', credentials);
+export const refreshToken = (refresh) => api.post('/users/users/token/refresh/', { refresh });
+export const verifyToken = (token) => api.post('/users/users/token/verify/', { token });
 
 // Registration endpoints
-export const registerUser = (data) => api.post('/register/', data);
-export const verifyOTP = (data) => api.post('/verify-otp/', data);
-export const resendOTP = (data) => api.post('/resend-otp/', data);
-export const checkEmailExists = (email) => api.post('/check-email/', { email });
+export const registerUser = (data) => api.post('/users/users/register/', data);
+export const verifyOTP = (data) => api.post('/users/users/verify-otp/', data);
+export const resendOTP = (data) => api.post('/users/users/resend-otp/', data);
+export const checkEmailExists = (email) => api.post('/users/users/check-email/', { email });
 
 // ================= User Profile Endpoints =================
-// export const fetchUserProfile = () => api.get('/profile/');
-export const updateUserProfile = (data) => api.put('/profile/', data);
+ export const fetchUserProfile = () => api.get('/users/users/profile/');
+export const updateUserProfile = (data) => api.put('/users/users/profile/', data);
 
 // ================= Candidate (Student) Endpoints =================
-export const fetchCandidateProfile = () => api.get('/candidate/profile/');
-export const updateCandidatePreferences = (data) => api.patch('/profile/candidate/preferences/', data);
-export const fetchAppliedJobs = () => api.get('/candidate/applications/jobs/');
-export const fetchAppliedInternships = () => api.get('/candidate/applications/internships/');
+export const fetchCandidateProfile = () => api.get('/users/candidate/profile/');
+export const updateCandidatePreferences = (data) => api.patch('/users/profile/candidate/preferences/', data);
+export const fetchAppliedJobs = () => api.get('/users/candidate/applications/jobs/');
+export const fetchAppliedInternships = () => api.get('/users/candidate/applications/internships/');
 
 // ================= Employer Endpoints =================
-export const fetchEmployerProfile = () => api.get('/employer/profile/');
-export const fetchMyInternships = () => api.get('/employer/my-internships/');
-export const fetchMyJobs = () => api.get('/employer/my-jobs/');
-export const createInternship = (data) => api.post('/employer/post-internship/', data);
-export const createJob = (data) => api.post('/employer/post-job/', data);
+export const fetchEmployerProfile = () => api.get('/users/employer/profile/');
+export const fetchMyInternships = () => api.get('/users/dashboard/employer/');
+export const fetchMyJobs = () => api.get('/users/dashboard/employer/');
+// Add to api.js (in the Employer Endpoints section)
+export const createJobPosting = (data) => api.post('/jobs/create/', data);
+// Add to api.js (in the Employer Endpoints section)
+export const createInternship = (data) => api.post('/jobs/internship/create/', data);
+// Add to api.js (in the Employer Endpoints section)
+export const updateJobPosting = (id, data) => api.patch(`/jobs/update/${id}/`, data);
+export const fetchJobDetails = (id, data) => api.patch(`/jobs/update/${id}/`, data);
+// Add to api.js (in the Employer Endpoints section)
+
+export const updateInternship = (id, data) => api.patch(`/jobs/internship/update/${id}/`, data);
+export const fetchInternshipDetails = (id) => api.patch(`/jobs/internship/update/${id}/`);  // Fixed URL // Add to api.js
+export const checkPhoneVerification = (data) => {
+  return api.post('/users/check-phone-verification/', data);
+};
+
+export const resendPhoneOTP = (data) => {
+  return api.post('/users/resend-phone-otp/', data);
+};
+
+export const verifyPhoneOTP = (data) => {
+  return api.post('/users/verify-phone-otp/', data);
+};
 
 // ================= Course Endpoints =================
 export const fetchCourses = (query = '') => {
   const url = query 
     ? `/adept/search?query=${encodeURIComponent(query)}`
-    : '/adept/';
+    : '/users/adept/';
   return api.get(url);
 };
 
@@ -123,7 +154,7 @@ export const createCourse = (data) => {
   if (data.image) {
     formData.append('image', data.image);
   }
-  return api.post('/adept/', formData, {
+  return api.post('/users/adept/', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -131,12 +162,18 @@ export const createCourse = (data) => {
 };
 
 
-
-
 export const updateCourse = (id, data) => api.patch(`/adept/${id}/`, data);
 export const deleteCourse = (id) => api.delete(`/adept/${id}/`);
 
 // Add to your api.js
-export const logout = (data) => api.post('/logout/', data);
+export const logout = (data) => api.post('/users/logout/', data);
+// Add to api.js
+export const updateProfile = (data) => {
+  return api.patch('/users/profile/update/', data);
+};
+
+export const fetchFilteredJobs = (params) => {
+  return api.get('/jobs/filtered/', { params });
+};
 
 export default api;

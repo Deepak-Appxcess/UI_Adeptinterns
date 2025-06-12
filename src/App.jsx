@@ -22,6 +22,8 @@ import StudentPreferences from './pages/Dashboard/Student/StudentPreferences'
 import PostJob from './pages/Dashboard/Employee/PostJob'
 import MyInternships from './pages/Dashboard/Employee/MyInternships'
 import MyJobs from './pages/Dashboard/Employee/MyJobs'
+import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
+import UpdateInternship from './pages/Dashboard/Employee/InternshipUpdate'
 import Employeeprofile from './pages/Dashboard/Employee/Profile'
 import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
 import axios from 'axios';
@@ -39,7 +41,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true)
+  const [isDarkMode, setIsDarkMode] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('All')
   const [selectedLocation, setSelectedLocation] = useState('All Locations')
@@ -194,7 +196,7 @@ function App() {
             <Route path="/courses" element={<Courses />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route 
-              path="/dashboard/employee" 
+              path="/dashboard/employer" 
               element={
                 <ProtectedRoute>
                   <EmployeeDashboard />
@@ -240,6 +242,8 @@ function App() {
                 <MyJobs />
               </ProtectedRoute>
             } />
+            <Route path="/employer/jobs/update/:id" element={<UpdateJob />} />
+            <Route path="/employer/internships/update/:id" element={<UpdateInternship />} />
           </Routes>
 
           <Footer isDarkMode={isDarkMode} />
@@ -354,7 +358,7 @@ function Home({
             </p>
             <div>
               <Link 
-                to={isAuthenticated ? "/dashboard/employee" : "/login"}
+                to={isAuthenticated ? "/dashboard/employer" : "/login"}
                 className={`${isDarkMode ? 'bg-white text-black' : 'bg-black text-white'} px-6 md:px-8 py-2 md:py-3 rounded-full flex items-center text-sm`}
               >
                 {isAuthenticated ? "Go to Dashboard" : "Get Started"}

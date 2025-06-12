@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
-import { login } from '../../services/api';  // Add this import
+import { login } from '../../services/api';
 
 const LoginPopup = ({ onClose }) => {
   const [email, setEmail] = useState('');
@@ -22,41 +22,49 @@ const LoginPopup = ({ onClose }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  try {
-    // Use the centralized login function from api.js
-    const { data } = await login({ email, password });
+    try {
+      // Determine role based on isStudent state
+      const role = isStudent ? 'Candidate' : 'Employer';
+      
+      // Use the centralized login function with role parameter
+      const { data } = await login({ 
+        email, 
+        password,
+        role 
+      });
 
-    // Store both access and refresh tokens
-    localStorage.setItem('authToken', data.access);
-    localStorage.setItem('refreshToken', data.refresh);
-    
-    // Dispatch storage event to notify other components
-    window.dispatchEvent(new Event('storage'));
-    
-    onClose?.();
-    
-    // Navigate based on user type
-    if (isStudent) {
-      navigate('/dashboard/student');
-    } else {
-      navigate('/dashboard/employee');
+      // Store both access and refresh tokens
+      localStorage.setItem('authToken', data.access);
+      localStorage.setItem('refreshToken', data.refresh);
+      
+      // Dispatch storage event to notify other components
+      window.dispatchEvent(new Event('storage'));
+      
+      onClose?.();
+      
+      // Navigate based on user type
+      if (isStudent) {
+        navigate('/dashboard/student');
+      } else {
+        navigate('/dashboard/employer');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      const errorMsg = err.response?.data?.detail || 
+                       err.response?.data?.message || 
+                       err.response?.data?.role || // Handle role-specific errors
+                       'Login failed. Please check your credentials.';
+
+      setError(errorMsg);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error('Login error:', err);
-    const errorMsg = err.response?.data?.detail || 
-                     err.response?.data?.message || 
-                     'Login failed. Please check your credentials.';
-
-    setError(errorMsg);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const handleClose = (e) => {
     if (e.target === e.currentTarget) {
@@ -81,7 +89,6 @@ const handleSubmit = async (e) => {
           className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Rest of the JSX remains the same */}
           <div className="flex justify-between items-center mb-6">
             <motion.h2 
               initial={{ x: -10, opacity: 0 }}

@@ -1,509 +1,757 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createInternship } from '../../../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createInternship, fetchEmployerProfile } from '../../../services/api';
+import { toast } from 'react-toastify';
 
 const PostInternship = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [profileComplete, setProfileComplete] = useState(true);
+  const [showDateFields, setShowDateFields] = useState(false);
+  const [showStipendFields, setShowStipendFields] = useState(false);
+  
   const [formData, setFormData] = useState({
-    
-    applicationDeadline: '',
-    profile: '',
-    skillsRequired: '',
-    internshipType: 'In office',
-    workType: 'Full-time',
-    openings: '',
-    startImmediately: true,
-    startDate: '',
-    duration: '3',
-    responsibilities: ['', '', ''],
-    preferences: ['', '', ''],
-    isPaid: false,
-    fixedStipendMin: '',
-    fixedStipendMax: '',
-    incentivesMin: '',
-    incentivesMax: '',
-    hasPPO: false,
-    perks: [],
-    screeningQuestions: [],
-    allowWomenReturnship: false,
-    alternateMobile: ''
+    internship_profile_title: '',
+    skills_required: [],
+    internship_type: 'HYBRID',
+    is_part_time: false,
+    start_date_option: 'IMMEDIATE',
+    start_date: '',
+    end_date: '',
+    duration: 3,
+    duration_unit: 'MONTHS',
+    responsibilities: [''],
+    allow_women_returning: false,
+    is_paid: false,
+    stipend_type: 'MONTHLY',
+    fixed_stipend_min: '',
+    fixed_stipend_max: '',
+    incentives_min: '',
+    incentives_max: '',
+    has_ppo: false,
+    perks: '',
+    screening_questions: [''],
+    alternate_mobile_number: '',
+    candidate_preferences: '',
+    number_of_openings: 1
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await createInternship(formData);
-      navigate('/dashboard/employee');
-    } catch (error) {
-      console.error('Error posting internship:', error);
-      // You might want to add error handling here (e.g., show a toast notification)
-    }
+  useEffect(() => {
+    const checkProfileCompletion = async () => {
+      try {
+        const { data } = await fetchEmployerProfile();
+        if (!data.has_completed_organization && !data.is_freelancer) {
+          setProfileComplete(false);
+          toast.error('Please complete your organization profile before posting internships');
+          navigate('/profile');
+        } else if (data.is_freelancer && !data.has_completed_freelancer_details) {
+          setProfileComplete(false);
+          toast.error('Please complete your freelancer profile before posting internships');
+          navigate('/profile');
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        toast.error('Failed to verify profile completion');
+      }
+    };
+
+    checkProfileCompletion();
+  }, [navigate]);
+
+  useEffect(() => {
+    setShowDateFields(formData.start_date_option === 'SPECIFIC');
+  }, [formData.start_date_option]);
+
+  useEffect(() => {
+    setShowStipendFields(formData.is_paid);
+  }, [formData.is_paid]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  const addScreeningQuestion = () => {
-    setFormData({
+  const handleArrayChange = (field, index, value) => {
+    const newArray = [...formData[field]];
+    newArray[index] = value;
+    setFormData(prev => ({
+      ...prev,
+      [field]: newArray
+    }));
+  };
+
+  const addArrayItem = (field) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: [...prev[field], '']
+    }));
+  };
+
+  const removeArrayItem = (field, index) => {
+    const newArray = formData[field].filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      [field]: newArray
+    }));
+  };
+
+  const handleSkillsChange = (e) => {
+    const options = Array.from(e.target.selectedOptions, option => option.value);
+    setFormData(prev => ({
+      ...prev,
+      skills_required: options
+    }));
+  };
+
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+
+  // Validate form data
+  if (formData.is_paid && parseFloat(formData.fixed_stipend_min) > parseFloat(formData.fixed_stipend_max)) {
+    toast.error('Minimum stipend cannot exceed maximum stipend');
+    setIsLoading(false);
+    return;
+  }
+
+  if (formData.skills_required.length === 0) {
+    toast.error('Please select at least one required skill');
+    setIsLoading(false);
+    return;
+  }
+
+  if (formData.alternate_mobile_number && formData.alternate_mobile_number.length > 15) {
+    toast.error('Alternate mobile number must be 15 characters or less');
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const payload = {
       ...formData,
-      screeningQuestions: [...formData.screeningQuestions, '']
-    });
-  };
+      duration: parseInt(formData.duration),
+      number_of_openings: parseInt(formData.number_of_openings),
+      fixed_stipend_min: formData.is_paid ? parseFloat(formData.fixed_stipend_min) : null,
+      fixed_stipend_max: formData.is_paid ? parseFloat(formData.fixed_stipend_max) : null,
+      incentives_min: formData.incentives_min ? parseFloat(formData.incentives_min) : null,
+      incentives_max: formData.incentives_max ? parseFloat(formData.incentives_max) : null,
+      responsibilities: formData.responsibilities.filter(resp => resp.trim() !== ''),
+      screening_questions: formData.screening_questions.filter(q => q.trim() !== ''),
+      start_date: formData.start_date_option === 'SPECIFIC' ? formData.start_date : null,
+      end_date: formData.start_date_option === 'SPECIFIC' ? formData.end_date : null
+    };
 
-  const updateScreeningQuestion = (index, value) => {
-    const newQuestions = [...formData.screeningQuestions];
-    newQuestions[index] = value;
-    setFormData({ ...formData, screeningQuestions: newQuestions });
-  };
+    const { data } = await createInternship(payload);
+    toast.success('Internship posted successfully!');
+    navigate('/dashboard/employer');
+  } catch (error) {
+    console.error('Error creating internship:', error);
+    const errorMessage = error.response?.data?.message || 'Failed to create internship posting';
+    toast.error(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-  const togglePerk = (perk) => {
-    if (formData.perks.includes(perk)) {
-      setFormData({
-        ...formData,
-        perks: formData.perks.filter(p => p !== perk)
-      });
-    } else {
-      setFormData({
-        ...formData,
-        perks: [...formData.perks, perk]
-      });
-    }
-  };
+  if (!profileComplete) {
+    return null; // Already redirected to profile
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow">
-      <h1 className="text-2xl font-bold mb-6">Post Internship</h1>
-      <form onSubmit={handleSubmit}>
-        {/* Company Information Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">Company Information</h2>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-4 sm:px-6 lg:px-8"
+    >
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ y: -20 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white shadow-xl rounded-2xl p-6 md:p-8 backdrop-blur-sm bg-opacity-90"
+        >
+          <motion.h1 
+            className="text-3xl font-bold text-gray-800 mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            Post a New Internship
+          </motion.h1>
           
-       
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Application Deadline *</label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded"
-              value={formData.applicationDeadline}
-              onChange={(e) => setFormData({...formData, applicationDeadline: e.target.value})}
-              required
-            />
-          </div>
-        </section>
-
-        {/* Opportunity Type Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">Opportunity type</h2>
-          <div className="flex gap-4">
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="opportunityType"
-                className="mr-2"
-                checked={false}
-                onChange={() => navigate('/post-job')}
-              />
-              Job
-            </label>
-            <label className="flex items-center">
-              <input
-                type="radio"
-                name="opportunityType"
-                className="mr-2"
-                checked={true}
-                readOnly
-              />
-              Internship
-            </label>
-          </div>
-        </section>
-
-        {/* Internship Details Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">Internship details</h2>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Internship profile *</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded"
-              value={formData.profile}
-              onChange={(e) => setFormData({...formData, profile: e.target.value})}
-              placeholder="e.g. Android App Development"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Skills required *</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded"
-              value={formData.skillsRequired}
-              onChange={(e) => setFormData({...formData, skillsRequired: e.target.value})}
-              placeholder="e.g. Java, React"
-              required
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-gray-700 mb-2">Internship type</label>
-              <div className="space-y-2">
-                {['In office', 'Hybrid', 'Remote'].map(type => (
-                  <label key={type} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="internshipType"
-                      checked={formData.internshipType === type}
-                      onChange={() => setFormData({...formData, internshipType: type})}
-                      className="mr-2"
-                    />
-                    {type}
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-gray-700 mb-2">Part-time/Full-time</label>
-              <div className="space-y-2">
-                {['Part-time', 'Full-time'].map(type => (
-                  <label key={type} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="workType"
-                      checked={formData.workType === type}
-                      onChange={() => setFormData({...formData, workType: type})}
-                      className="mr-2"
-                    />
-                    {type}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Number of openings *</label>
-            <input
-              type="number"
-              className="w-full p-2 border rounded"
-              value={formData.openings}
-              onChange={(e) => setFormData({...formData, openings: e.target.value})}
-              placeholder="e.g. 4"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Internship start date</label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="startDate"
-                  checked={formData.startImmediately}
-                  onChange={() => setFormData({...formData, startImmediately: true})}
-                  className="mr-2"
-                />
-                Immediately (within next 30 days)
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Internship Title */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <label htmlFor="internship_profile_title" className="block text-sm font-medium text-gray-700">
+                Internship Title*
               </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="startDate"
-                  checked={!formData.startImmediately}
-                  onChange={() => setFormData({...formData, startImmediately: false})}
-                  className="mr-2"
-                />
-                Later
-              </label>
-            </div>
-            {!formData.startImmediately && (
               <input
-                type="date"
-                className="w-full p-2 border rounded mt-2"
-                value={formData.startDate}
-                onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                type="text"
+                id="internship_profile_title"
+                name="internship_profile_title"
+                value={formData.internship_profile_title}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                required
               />
-            )}
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Internship duration</label>
-            <div className="flex items-center gap-2">
+            </motion.div>
+
+            {/* Skills Required */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <label htmlFor="skills_required" className="block text-sm font-medium text-gray-700">
+                Required Skills* (Select multiple)
+              </label>
               <select
-                className="p-2 border rounded"
-                value={formData.duration}
-                onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                multiple
+                id="skills_required"
+                name="skills_required"
+                value={formData.skills_required}
+                onChange={handleSkillsChange}
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                required
               >
-                {['1', '2', '3', '4', '5', '6'].map(month => (
-                  <option key={month} value={month}>{month}</option>
-                ))}
+                <option value="Python">Python</option>
+                <option value="JavaScript">JavaScript</option>
+                <option value="React">React</option>
+                <option value="Node.js">Node.js</option>
+                <option value="SEO">SEO</option>
+                <option value="Content Writing">Content Writing</option>
+                <option value="Graphic Design">Graphic Design</option>
+                <option value="Marketing">Marketing</option>
               </select>
-              <span>months</span>
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Intern's responsibilities *</label>
-            <p className="text-sm text-gray-500 mb-2">Selected intern's day-to-day responsibilities include:</p>
-            {formData.responsibilities.map((resp, index) => (
-              <input
-                key={index}
-                type="text"
-                className="w-full p-2 border rounded mb-2"
-                value={resp}
-                onChange={(e) => {
-                  const newResponsibilities = [...formData.responsibilities];
-                  newResponsibilities[index] = e.target.value;
-                  setFormData({...formData, responsibilities: newResponsibilities});
-                }}
-                placeholder={`Responsibility ${index + 1}`}
-                required={index === 0} // At least first responsibility is required
-              />
-            ))}
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Additional candidate preferences</label>
-            {formData.preferences.map((pref, index) => (
-              <input
-                key={index}
-                type="text"
-                className="w-full p-2 border rounded mb-2"
-                value={pref}
-                onChange={(e) => {
-                  const newPreferences = [...formData.preferences];
-                  newPreferences[index] = e.target.value;
-                  setFormData({...formData, preferences: newPreferences});
-                }}
-                placeholder={`Preference ${index + 1}`}
-              />
-            ))}
-          </div>
+              <p className="mt-1 text-sm text-gray-500">Hold Ctrl/Cmd to select multiple skills</p>
+            </motion.div>
 
-          <div className="mb-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.allowWomenReturnship}
-                onChange={(e) => setFormData({...formData, allowWomenReturnship: e.target.checked})}
-                className="mr-2"
-              />
-              Allow applications from women also who are willing to start/restart their career.
-              <a href="#" className="text-blue-600 ml-1">Know more</a>
-            </label>
-          </div>
-        </section>
-        
-        {/* Stipend & Perks Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">Stipend & perks</h2>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Stipend</label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isPaid"
-                  checked={formData.isPaid}
-                  onChange={() => setFormData({...formData, isPaid: true})}
-                  className="mr-2"
-                />
-                Paid
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="isPaid"
-                  checked={!formData.isPaid}
-                  onChange={() => setFormData({...formData, isPaid: false})}
-                  className="mr-2"
-                />
-                Unpaid
-              </label>
-            </div>
-          </div>
-          
-          {formData.isPaid && (
-            <>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Fixed stipend</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    className="w-24 p-2 border rounded"
-                    value={formData.fixedStipendMin}
-                    onChange={(e) => setFormData({...formData, fixedStipendMin: e.target.value})}
-                    placeholder="Min"
-                  />
-                  <span>to</span>
-                  <input
-                    type="number"
-                    className="w-24 p-2 border rounded"
-                    value={formData.fixedStipendMax}
-                    onChange={(e) => setFormData({...formData, fixedStipendMax: e.target.value})}
-                    placeholder="Max"
-                  />
-                  <span>/month</span>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Incentives</label>
-                <p className="text-sm text-gray-500 mb-2">
-                  If the role includes incentives/variable pay, we recommend mentioning it to attract better talent.
-                </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    className="w-24 p-2 border rounded"
-                    value={formData.incentivesMin}
-                    onChange={(e) => setFormData({...formData, incentivesMin: e.target.value})}
-                    placeholder="Min"
-                  />
-                  <span>to</span>
-                  <input
-                    type="number"
-                    className="w-24 p-2 border rounded"
-                    value={formData.incentivesMax}
-                    onChange={(e) => setFormData({...formData, incentivesMax: e.target.value})}
-                    placeholder="Max"
-                  />
-                  <span>/month</span>
-                </div>
-              </div>
-            </>
-          )}
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Does this internship come with a pre-placement offer (PPO)?</label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="hasPPO"
-                  checked={formData.hasPPO}
-                  onChange={() => setFormData({...formData, hasPPO: true})}
-                  className="mr-2"
-                />
-                Yes
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="hasPPO"
-                  checked={!formData.hasPPO}
-                  onChange={() => setFormData({...formData, hasPPO: false})}
-                  className="mr-2"
-                />
-                No
-              </label>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Perks (Select all that apply)</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {[
-                'Certificate',
-                'Letter of recommendation',
-                'Flexible work hours',
-                '5 days a week',
-                'Informal dress code',
-                'Free snacks & beverages'
-              ].map(perk => (
-                <label key={perk} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.perks.includes(perk)}
-                    onChange={() => togglePerk(perk)}
-                    className="mr-2"
-                  />
-                  {perk}
+            {/* Internship Type and Part-time */}
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div>
+                <label htmlFor="internship_type" className="block text-sm font-medium text-gray-700">
+                  Internship Type*
                 </label>
+                <select
+                  id="internship_type"
+                  name="internship_type"
+                  value={formData.internship_type}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                  required
+                >
+                  <option value="IN_OFFICE">In Office</option>
+                  <option value="HYBRID">Hybrid</option>
+                  <option value="REMOTE">Remote</option>
+                </select>
+              </div>
+              <div className="flex items-center pt-6">
+                <input
+                  type="checkbox"
+                  id="is_part_time"
+                  name="is_part_time"
+                  checked={formData.is_part_time}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="is_part_time" className="ml-2 block text-sm text-gray-700">
+                  Part-time Internship
+                </label>
+              </div>
+            </motion.div>
+
+            {/* Start Date Options */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45 }}
+            >
+              <label htmlFor="start_date_option" className="block text-sm font-medium text-gray-700">
+                Start Date Option*
+              </label>
+              <select
+                id="start_date_option"
+                name="start_date_option"
+                value={formData.start_date_option}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                required
+              >
+                <option value="IMMEDIATE">Immediate Start</option>
+                <option value="SPECIFIC">Specific Start Date</option>
+              </select>
+            </motion.div>
+
+            {/* Specific Date Fields */}
+            <AnimatePresence>
+              {showDateFields && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
+                  <div>
+                    <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">
+                      Start Date*
+                    </label>
+                    <input
+  type="date"
+  id="start_date"
+  name="start_date"
+  value={formData.start_date}
+  onChange={handleChange}
+  min={new Date().toISOString().split('T')[0]} // Ensures YYYY-MM-DD format
+  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+  required={showDateFields}
+/>
+                  </div>
+                  <div>
+                    <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">
+                      End Date*
+                    </label>
+                   <input
+  type="date"
+  id="end_date"
+  name="end_date"
+  value={formData.end_date}
+  onChange={handleChange}
+  min={formData.start_date || new Date().toISOString().split('T')[0]} // Ensures YYYY-MM-DD format
+  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+  required={showDateFields}
+/>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Duration */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              <div>
+                <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
+                  Duration*
+                </label>
+                <input
+                  type="number"
+                  id="duration"
+                  name="duration"
+                  min="1"
+                  value={formData.duration}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="duration_unit" className="block text-sm font-medium text-gray-700">
+                  Duration Unit*
+                </label>
+                <select
+                  id="duration_unit"
+                  name="duration_unit"
+                  value={formData.duration_unit}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                  required
+                >
+                  <option value="WEEKS">Weeks</option>
+                  <option value="MONTHS">Months</option>
+                </select>
+              </div>
+            </motion.div>
+
+            {/* Responsibilities */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.55 }}
+            >
+              <label className="block text-sm font-medium text-gray-700">
+                Responsibilities*
+              </label>
+              {formData.responsibilities.map((resp, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center mt-2"
+                >
+                  <input
+                    type="text"
+                    value={resp}
+                    onChange={(e) => handleArrayChange('responsibilities', index, e.target.value)}
+                    className="flex-1 block border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                    required
+                  />
+                  {formData.responsibilities.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeArrayItem('responsibilities', index)}
+                      className="ml-2 p-1 text-red-500 hover:text-red-700 transition duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </motion.div>
               ))}
-            </div>
-          </div>
-        </section>
+              <button
+                type="button"
+                onClick={() => addArrayItem('responsibilities')}
+                className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-lg text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
+              >
+                Add Responsibility
+              </button>
+            </motion.div>
 
-        {/* Screening Questions Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">Screening Questions</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            You can use these questions to filter relevant applications
-          </p>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Availability (Default)</label>
-            <p className="text-sm text-gray-500 mb-2">
-              Please confirm your availability for this internship. If not available immediately, how early would you be able to join?
-            </p>
-          </div>
-          
-          {formData.screeningQuestions.map((question, index) => (
-            <div key={index} className="mb-4">
+            {/* Number of Openings */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              <label htmlFor="number_of_openings" className="block text-sm font-medium text-gray-700">
+                Number of Openings*
+              </label>
               <input
-                type="text"
-                className="w-full p-2 border rounded"
-                value={question}
-                onChange={(e) => updateScreeningQuestion(index, e.target.value)}
-                placeholder={`Question ${index + 1}`}
+                type="number"
+                id="number_of_openings"
+                name="number_of_openings"
+                min="1"
+                value={formData.number_of_openings}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                required
               />
-            </div>
-          ))}
-          
-          <button
-            type="button"
-            onClick={addScreeningQuestion}
-            className="text-blue-600 flex items-center gap-1"
-          >
-            <span>+</span> Add more questions (Optional)
-          </button>
-        </section>
+            </motion.div>
 
-        {/* Alternate Mobile Number Section */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2">Alternate mobile number for this listing</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Our team will call you on this number in case of any query regarding this listing only. Primary account number will not be updated.
-          </p>
-          
-          <div className="flex items-center gap-2">
-            <span className="p-2 border rounded">+91</span>
-            <input
-              type="tel"
-              className="w-full p-2 border rounded"
-              value={formData.alternateMobile}
-              onChange={(e) => setFormData({...formData, alternateMobile: e.target.value})}
-              placeholder="9952800477"
-              maxLength="10"
-            />
-          </div>
-        </section>
+            {/* Paid Internship */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.65 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="is_paid"
+                  name="is_paid"
+                  checked={formData.is_paid}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="is_paid" className="ml-2 block text-sm text-gray-700">
+                  Paid Internship
+                </label>
+              </div>
 
-        {/* Form Actions */}
-        <div className="flex justify-between">
-          <button
-            type="button"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded"
-          >
-            Save draft
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-          >
-            Post internship
-          </button>
-        </div>
+              <AnimatePresence>
+                {showStipendFields && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label htmlFor="stipend_type" className="block text-sm font-medium text-gray-700">
+                        Stipend Type*
+                      </label>
+                      <select
+                        id="stipend_type"
+                        name="stipend_type"
+                        value={formData.stipend_type}
+                        onChange={handleChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                        required={showStipendFields}
+                      >
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="LUMP_SUM">Lump Sum</option>
+                      </select>
+                    </div>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
-          Need assistance? Please visit <a href="#" className="text-blue-600">Help Center</a>
-        </div>
-      </form>
-    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label htmlFor="fixed_stipend_min" className="block text-sm font-medium text-gray-700">
+                          Minimum Stipend (₹)*
+                        </label>
+                        <input
+                          type="number"
+                          id="fixed_stipend_min"
+                          name="fixed_stipend_min"
+                          min="0"
+                          step="0.01"
+                          value={formData.fixed_stipend_min}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                          required={showStipendFields}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="fixed_stipend_max" className="block text-sm font-medium text-gray-700">
+                          Maximum Stipend (₹)*
+                        </label>
+                        <input
+                          type="number"
+                          id="fixed_stipend_max"
+                          name="fixed_stipend_max"
+                          min="0"
+                          step="0.01"
+                          value={formData.fixed_stipend_max}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                          required={showStipendFields}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Incentives */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              <div>
+                <label htmlFor="incentives_min" className="block text-sm font-medium text-gray-700">
+                  Minimum Incentives (₹)
+                </label>
+                <input
+                  type="number"
+                  id="incentives_min"
+                  name="incentives_min"
+                  min="0"
+                  step="0.01"
+                  value={formData.incentives_min}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                />
+              </div>
+              <div>
+                <label htmlFor="incentives_max" className="block text-sm font-medium text-gray-700">
+                  Maximum Incentives (₹)
+                </label>
+                <input
+                  type="number"
+                  id="incentives_max"
+                  name="incentives_max"
+                  min="0"
+                  step="0.01"
+                  value={formData.incentives_max}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                />
+              </div>
+            </motion.div>
+
+            {/* Benefits */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.75 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="allow_women_returning"
+                  name="allow_women_returning"
+                  checked={formData.allow_women_returning}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="allow_women_returning" className="ml-2 block text-sm text-gray-700">
+                  Open to women returning to work
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="has_ppo"
+                  name="has_ppo"
+                  checked={formData.has_ppo}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="has_ppo" className="ml-2 block text-sm text-gray-700">
+                  Pre-placement offer (PPO) opportunity
+                </label>
+              </div>
+            </motion.div>
+
+            {/* Perks */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              <label htmlFor="perks" className="block text-sm font-medium text-gray-700">
+                Perks
+              </label>
+              <textarea
+                id="perks"
+                name="perks"
+                rows={2}
+                value={formData.perks}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                placeholder="Flexible hours, mentorship, free lunch, etc."
+              />
+            </motion.div>
+
+            {/* Screening Questions */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.85 }}
+            >
+              <label className="block text-sm font-medium text-gray-700">
+                Screening Questions*
+              </label>
+              {formData.screening_questions.map((question, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center mt-2"
+                >
+                  <input
+                    type="text"
+                    value={question}
+                    onChange={(e) => handleArrayChange('screening_questions', index, e.target.value)}
+                    className="flex-1 block border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                    required
+                  />
+                  {formData.screening_questions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeArrayItem('screening_questions', index)}
+                      className="ml-2 p-1 text-red-500 hover:text-red-700 transition duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </motion.div>
+              ))}
+              <button
+                type="button"
+                onClick={() => addArrayItem('screening_questions')}
+                className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-lg text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200"
+              >
+                Add Question
+              </button>
+            </motion.div>
+
+            {/* Contact Info */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+            >
+              <label htmlFor="alternate_mobile_number" className="block text-sm font-medium text-gray-700">
+                Alternate Contact Number
+              </label>
+<input
+  type="tel"
+  id="alternate_mobile_number"
+  name="alternate_mobile_number"
+  value={formData.alternate_mobile_number}
+  onChange={(e) => {
+    // Limit to 15 characters
+    const value = e.target.value.slice(0, 15);
+    setFormData(prev => ({ ...prev, alternate_mobile_number: value }));
+  }}
+  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+  placeholder="+919876543210"
+/>
+            </motion.div>
+
+            {/* Candidate Preferences */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.95 }}
+            >
+              <label htmlFor="candidate_preferences" className="block text-sm font-medium text-gray-700">
+                Candidate Preferences*
+              </label>
+              <textarea
+                id="candidate_preferences"
+                name="candidate_preferences"
+                rows={3}
+                value={formData.candidate_preferences}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                required
+              />
+            </motion.div>
+
+            {/* Submit Button */}
+            <motion.div
+              className="flex justify-end"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+            >
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:-translate-y-1"
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Posting Internship...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                    </svg>
+                    Post Internship
+                  </>
+                )}
+              </button>
+            </motion.div>
+          </form>
+        </motion.div>
+      </div>
+    </motion.div>
   );
 };
 

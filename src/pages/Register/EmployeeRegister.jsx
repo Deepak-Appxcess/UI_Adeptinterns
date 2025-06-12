@@ -156,13 +156,11 @@ const EmployeeRegister = () => {
       });
 
       // Store tokens in memory (not localStorage)
-      sessionStorage.setItem('tempAuthTokens', JSON.stringify({
-        access: data.access,
-        refresh: data.refresh
-      }));
+       localStorage.setItem('authToken', data.access);
+      localStorage.setItem('refreshToken', data.refresh);
 
       // Redirect to dashboard
-      navigate('/dashboard/employee');
+      navigate('/dashboard/employer');
     } catch (error) {
       console.error('OTP verification error:', error);
       if (error.response) {
