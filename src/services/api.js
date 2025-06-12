@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'https://excessive-pads-cooked-tips.trycloudflare.com/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -67,7 +67,7 @@ api.interceptors.response.use(
 
 // Candidate Bio Endpoint ONLY
 export const updateCandidateBio = (formData) => {
-  return api.patch('/users/users/profile/candidate/bio/', formData, {
+  return api.patch('/users/profile/candidate/bio/', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -79,7 +79,7 @@ export const updateCandidateBio = (formData) => {
 
 // Add to api.js
 export const setupEmployerProfile = (formData) => {
-  return api.patch('/users/users/profile/employer/setup/', formData, {
+  return api.patch('/users/profile/employer/setup/', formData, {
     headers: {
       'Content-Type': formData instanceof FormData ? 'multipart/form-data' : 'application/json'
     }
@@ -87,19 +87,19 @@ export const setupEmployerProfile = (formData) => {
 };
 
 // ================= Auth API Endpoints =================
-export const login = (credentials) => api.post('/users/users/token/', credentials);
-export const refreshToken = (refresh) => api.post('/users/users/token/refresh/', { refresh });
-export const verifyToken = (token) => api.post('/users/users/token/verify/', { token });
+export const login = (credentials) => api.post('/users/token/', credentials);
+export const refreshToken = (refresh) => api.post('/users/token/refresh/', { refresh });
+export const verifyToken = (token) => api.post('/users/token/verify/', { token });
 
 // Registration endpoints
-export const registerUser = (data) => api.post('/users/users/register/', data);
-export const verifyOTP = (data) => api.post('/users/users/verify-otp/', data);
-export const resendOTP = (data) => api.post('/users/users/resend-otp/', data);
-export const checkEmailExists = (email) => api.post('/users/users/check-email/', { email });
+export const registerUser = (data) => api.post('/users/register/', data);
+export const verifyOTP = (data) => api.post('/users/verify-otp/', data);
+export const resendOTP = (data) => api.post('/users/resend-otp/', data);
+export const checkEmailExists = (email) => api.post('/users/check-email/', { email });
 
 // ================= User Profile Endpoints =================
- export const fetchUserProfile = () => api.get('/users/users/profile/');
-export const updateUserProfile = (data) => api.put('/users/users/profile/', data);
+ export const fetchUserProfile = () => api.get('/users/profile/');
+export const updateUserProfile = (data) => api.put('/users/profile/', data);
 
 // ================= Candidate (Student) Endpoints =================
 export const fetchCandidateProfile = () => api.get('/users/candidate/profile/');
