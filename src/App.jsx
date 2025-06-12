@@ -20,8 +20,7 @@ import PostInternships from './pages/Dashboard/Employee/PostInternship'
 import StudentBio from './pages/Dashboard/Student/StudentBio'
 import StudentPreferences from './pages/Dashboard/Student/StudentPreferences'
 import PostJob from './pages/Dashboard/Employee/PostJob'
-import MyInternships from './pages/Dashboard/Employee/MyInternships'
-import MyJobs from './pages/Dashboard/Employee/MyJobs'
+
 import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
 import UpdateInternship from './pages/Dashboard/Employee/InternshipUpdate'
 import Employeeprofile from './pages/Dashboard/Employee/Profile'
@@ -232,16 +231,7 @@ function App() {
                 <PostJob />
               </ProtectedRoute>
             } />
-            <Route path="/my-internships" element={
-              <ProtectedRoute>
-                <MyInternships />
-              </ProtectedRoute>
-            } />
-            <Route path="/my-jobs" element={
-              <ProtectedRoute>
-                <MyJobs />
-              </ProtectedRoute>
-            } />
+            
             <Route path="/employer/jobs/update/:id" element={<UpdateJob />} />
             <Route path="/employer/internships/update/:id" element={<UpdateInternship />} />
           </Routes>
