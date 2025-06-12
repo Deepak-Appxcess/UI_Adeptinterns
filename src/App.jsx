@@ -46,7 +46,10 @@ function App() {
   const [selectedLocation, setSelectedLocation] = useState('All Locations')
   const [selectedSalary, setSelectedSalary] = useState('All Salaries')
   const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [featuredJobs, setFeaturedJobs] = useState([]);
+  const [featuredInternships, setFeaturedInternships] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
  useEffect(() => {
     const getFeaturedCourses = async () => {
@@ -62,6 +65,44 @@ function App() {
     getFeaturedCourses();
   }, []);
 
+  // Fetch featured jobs and internships
+  useEffect(() => {
+    const getFeaturedOpportunities = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch jobs
+        const jobsResponse = await api.get('/jobs/filtered/', {
+          params: { 
+            opportunity_type: 'JOB'
+          }
+        });
+        
+        // Fetch internships
+        const internshipsResponse = await api.get('/jobs/filtered/', {
+          params: { 
+            opportunity_type: 'INTERNSHIP'
+          }
+        });
+
+        // Set featured jobs (first 3)
+        setFeaturedJobs(jobsResponse.data.results?.slice(0, 3) || []);
+        
+        // Set featured internships (first 3)
+        setFeaturedInternships(internshipsResponse.data.results?.slice(0, 3) || []);
+        
+      } catch (error) {
+        console.error('Error fetching featured opportunities:', error);
+        // Fallback to empty arrays if API fails
+        setFeaturedJobs([]);
+        setFeaturedInternships([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getFeaturedOpportunities();
+  }, []);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -111,36 +152,6 @@ function App() {
     'Above ₹20L'
   ]
 
-  const featuredJobs = [
-    {
-      title: 'Product Designer (UI, Visual Design)',
-      company: 'SnapFind',
-      location: 'Delhi',
-      salary: '₹11,00,000 - 15,00,000 /year',
-      isActive: true,
-      category: 'Design',
-      description: 'Join our dynamic team to create innovative user experiences and shape the future of digital products.'
-    },
-    {
-      title: 'Sales Associate',
-      company: 'PlanetSpark',
-      location: 'Delhi, Pune, Bangalore',
-      salary: '₹6,50,000 - 7,50,000 /year',
-      isActive: true,
-      category: 'Business & Management',
-      description: 'Drive business growth through strategic sales initiatives and client relationship management.'
-    },
-    {
-      title: 'Software Engineer',
-      company: 'TechCorp',
-      location: 'Bangalore',
-      salary: '₹8,00,000 - 12,00,000 /year',
-      isActive: true,
-      category: 'Engineering',
-      description: 'Build scalable applications using cutting-edge technologies in a collaborative environment.'
-    }
-  ]
-
   const getSalaryRange = (salary) => {
     const amount = parseInt(salary.match(/\d+/g)[0])
     if (amount < 500000) return 'Below ₹5L'
@@ -150,12 +161,48 @@ function App() {
     return 'Above ₹20L'
   }
 
+  // Helper function to format salary
+  const formatSalary = (min, max) => {
+    if (!min && !max) return 'Salary not disclosed';
+    if (min && max) return `₹${parseFloat(min).toLocaleString()} - ₹${parseFloat(max).toLocaleString()}/year`;
+    if (min) return `₹${parseFloat(min).toLocaleString()}+/year`;
+    return `Up to ₹${parseFloat(max).toLocaleString()}/year`;
+  };
+
+  // Helper function to format stipend
+  const formatStipend = (min, max, isPaid) => {
+    if (!isPaid) return 'Unpaid';
+    if (!min && !max) return 'Stipend not disclosed';
+    if (min && max) return `₹${parseFloat(min).toLocaleString()} - ₹${parseFloat(max).toLocaleString()}/month`;
+    if (min) return `₹${parseFloat(min).toLocaleString()}+/month`;
+    return `Up to ₹${parseFloat(max).toLocaleString()}/month`;
+  };
+
+  // Helper function to get work type
+  const getWorkType = (jobType, workSchedule) => {
+    const type = jobType || 'Remote';
+    const schedule = workSchedule || 'Full-time';
+    return `${type} • ${schedule}`;
+  };
+
+  // Helper function to get internship type
+  const getInternshipType = (internshipType, isPartTime) => {
+    const type = internshipType || 'Remote';
+    const schedule = isPartTime ? 'Part-time' : 'Full-time';
+    return `${type} • ${schedule}`;
+  };
+
   const filteredJobs = featuredJobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter = selectedFilter === 'All' || job.category === selectedFilter
-    const matchesLocation = selectedLocation === 'All Locations' || job.location.includes(selectedLocation)
-    const matchesSalary = selectedSalary === 'All Salaries' || getSalaryRange(job.salary) === selectedSalary
+    const matchesSearch = job.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         job.employer_organization?.organization_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFilter = selectedFilter === 'All' || job.skills_required?.some(skill => 
+      skill.toLowerCase().includes(selectedFilter.toLowerCase())
+    )
+    const matchesLocation = selectedLocation === 'All Locations' || 
+                           job.job_type?.includes(selectedLocation) ||
+                           selectedLocation === 'Remote'
+    const salaryString = formatSalary(job.fixed_pay_min, job.fixed_pay_max);
+    const matchesSalary = selectedSalary === 'All Salaries' || getSalaryRange(salaryString) === selectedSalary
     return matchesSearch && matchesFilter && matchesLocation && matchesSalary
   })
 
@@ -186,8 +233,15 @@ function App() {
                 locations={locations}
                 salaryRanges={salaryRanges}
                 filteredJobs={filteredJobs}
+                featuredJobs={featuredJobs}
+                featuredInternships={featuredInternships}
                 featuredCourses={featuredCourses}
                 isAuthenticated={isAuthenticated}
+                loading={loading}
+                formatSalary={formatSalary}
+                formatStipend={formatStipend}
+                getWorkType={getWorkType}
+                getInternshipType={getInternshipType}
               />
             } />
             <Route path="/jobs" element={<Jobs />} />
@@ -257,35 +311,16 @@ function Home({
   locations,
   salaryRanges,
   filteredJobs,
+  featuredJobs,
+  featuredInternships,
   featuredCourses,
-  isAuthenticated
+  isAuthenticated,
+  loading,
+  formatSalary,
+  formatStipend,
+  getWorkType,
+  getInternshipType
 }) {
-  const featuredInternships = [
-    {
-      title: 'Human Resources (HR)',
-      company: 'NotBroker',
-      location: 'Bangalore',
-      duration: '4 Months',
-      stipend: '₹10,000 - 13,000 /month',
-      description: 'Gain hands-on experience in talent acquisition, employee engagement, and HR operations.'
-    },
-    {
-      title: 'Law/Legal',
-      company: 'American Oncology Institute',
-      location: 'Bangalore',
-      duration: '2 Months',
-      stipend: 'Unpaid',
-      description: 'Work on real legal cases and learn from experienced professionals in healthcare law.'
-    },
-    {
-      title: 'Software Development',
-      company: 'TechStart',
-      location: 'Remote',
-      duration: '6 Months',
-      stipend: '₹15,000 - 20,000 /month',
-      description: 'Build real-world applications using modern technologies and best practices.'
-    }
-  ]
 
   return (
     <main className="container mx-auto px-4 md:px-8">
@@ -462,23 +497,65 @@ function Home({
         </div>
 
         {/* Job Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {filteredJobs.map((job, index) => (
-            <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
-              {job.isActive && (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((index) => (
+              <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 animate-pulse`}>
+                <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
+                <div className="h-3 bg-gray-300 rounded mb-2 w-1/2"></div>
+                <div className="h-3 bg-gray-300 rounded mb-4 w-2/3"></div>
+                <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {filteredJobs.length > 0 ? filteredJobs.map((job, index) => (
+              <div key={job.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
                 <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mb-2">
                   Actively hiring
                 </span>
-              )}
-              <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
-              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>{job.company}</p>
-              <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>{job.location}</p>
-              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>{job.salary}</p>
-              <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>{job.description}</p>
-              <button className="text-blue-500 hover:text-blue-600">View details →</button>
-            </div>
-          ))}
-        </div>
+                <h3 className="text-xl font-semibold mb-2">{job.job_title}</h3>
+                <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
+                  {job.employer_organization?.organization_name || 'Company Name'}
+                </p>
+                <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>
+                  {getWorkType(job.job_type, job.work_schedule)}
+                </p>
+                <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
+                  {formatSalary(job.fixed_pay_min, job.fixed_pay_max)}
+                </p>
+                <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>
+                  {job.job_description?.[0] || 'Join our team and make an impact with your skills.'}
+                </p>
+                {job.skills_required && job.skills_required.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-1">
+                      {job.skills_required.slice(0, 3).map((skill, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                          {skill}
+                        </span>
+                      ))}
+                      {job.skills_required.length > 3 && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                          +{job.skills_required.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <button className="text-blue-500 hover:text-blue-600">View details →</button>
+              </div>
+            )) : (
+              <div className="col-span-3 text-center py-8">
+                <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>
+                  No jobs found matching your criteria.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Featured Internships Section */}
@@ -487,19 +564,73 @@ function Home({
           <h2 className="text-2xl md:text-4xl font-bold">Featured Internships</h2>
           <Link to="/internships" className="text-blue-500 hover:text-blue-600">View all →</Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featuredInternships.map((internship, index) => (
-            <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
-              <h3 className="text-xl font-semibold mb-2">{internship.title}</h3>
-              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>{internship.company}</p>
-              <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>{internship.location}</p>
-              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>Duration: {internship.duration}</p>
-              <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>Stipend: {internship.stipend}</p>
-              <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>{internship.description}</p>
-              <button className="text-blue-500 hover:text-blue-600">View details →</button>
-            </div>
-          ))}
-        </div>
+        
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((index) => (
+              <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 animate-pulse`}>
+                <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
+                <div className="h-3 bg-gray-300 rounded mb-2 w-1/2"></div>
+                <div className="h-3 bg-gray-300 rounded mb-4 w-2/3"></div>
+                <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {featuredInternships.length > 0 ? featuredInternships.map((internship, index) => (
+              <div key={internship.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
+                <h3 className="text-xl font-semibold mb-2">{internship.internship_profile_title}</h3>
+                <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
+                  {internship.employer_organization?.organization_name || 'Company Name'}
+                </p>
+                <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>
+                  {getInternshipType(internship.internship_type, internship.is_part_time)}
+                </p>
+                <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
+                  Duration: {internship.duration} {internship.duration_unit?.toLowerCase() || 'months'}
+                </p>
+                <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
+                  Stipend: {formatStipend(internship.fixed_stipend_min, internship.fixed_stipend_max, internship.is_paid)}
+                </p>
+                <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>
+                  {internship.responsibilities?.[0] || 'Gain hands-on experience and learn from experienced professionals.'}
+                </p>
+                {internship.skills_required && internship.skills_required.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-1">
+                      {internship.skills_required.slice(0, 3).map((skill, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                          {skill}
+                        </span>
+                      ))}
+                      {internship.skills_required.length > 3 && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                          +{internship.skills_required.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {internship.has_ppo && (
+                  <div className="mb-2">
+                    <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
+                      PPO Available
+                    </span>
+                  </div>
+                )}
+                <button className="text-blue-500 hover:text-blue-600">View details →</button>
+              </div>
+            )) : (
+              <div className="col-span-3 text-center py-8">
+                <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>
+                  No internships available at the moment.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Featured Courses Section */}
@@ -542,6 +673,10 @@ function Home({
               <h3 className="text-xl font-semibold mb-2">
                 {content?.courseTitle || 'Untitled Course'}
               </h3>
+
+              <div className="text-xl font-semibold text-purple-600 mb-3">
+                {course.price ? `$${course.price}` : 'Free'}
+              </div>
 
               <p
                 className={`${
