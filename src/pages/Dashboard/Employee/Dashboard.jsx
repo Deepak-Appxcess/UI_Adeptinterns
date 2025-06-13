@@ -302,8 +302,124 @@ const EmployerDashboard = () => {
         </div>
       </motion.header>
 
+      
+        {/* Job/Internship Management Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg"
+        >
+          {/* Header with Tabs */}
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2 className="text-xl font-semibold text-gray-900">Manage Opportunities</h2>
+              
+              {/* Search and Filter Controls */}
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                  />
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`p-2 rounded-lg border transition-all ${
+                    showFilters 
+                      ? 'bg-indigo-50 border-indigo-200 text-indigo-600' 
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Filter className="w-4 h-4" />
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="flex space-x-1 mt-6 bg-gray-100 rounded-lg p-1">
+              {[
+                { key: 'JOB', label: 'Jobs', count: jobs.length },
+                { key: 'INTERNSHIP', label: 'Internships', count: internships.length }
+              ].map((tab) => (
+                <motion.button
+                  key={tab.key}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex-1 py-3 px-4 rounded-md font-medium text-sm transition-all ${
+                    activeTab === tab.key
+                      ? 'bg-white text-indigo-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                    activeTab === tab.key
+                      ? 'bg-indigo-100 text-indigo-600'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* Filter Panel */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="border-b border-gray-100"
+              >
+                <FilterPanel 
+                  type={activeTab} 
+                  onFilterChange={handleFilterChange} 
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Results */}
+          <div className="p-6">
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full"
+                />
+              </div>
+            ) : error ? (
+              <div className="text-red-500 text-center py-6">{error}</div>
+            ) : activeTab === 'JOB' ? (
+              <JobInternshipTable 
+                data={jobs} 
+                type="JOB" 
+              />
+            ) : (
+              <JobInternshipTable 
+                data={internships} 
+                type="INTERNSHIP" 
+              />
+            )}
+          </div>
+        </motion.div>
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        
+
         {/* Quick Stats Cards */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -469,118 +585,6 @@ const EmployerDashboard = () => {
           </motion.div>
         )}
 
-        {/* Job/Internship Management Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg"
-        >
-          {/* Header with Tabs */}
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h2 className="text-xl font-semibold text-gray-900">Manage Opportunities</h2>
-              
-              {/* Search and Filter Controls */}
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                  />
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`p-2 rounded-lg border transition-all ${
-                    showFilters 
-                      ? 'bg-indigo-50 border-indigo-200 text-indigo-600' 
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Filter className="w-4 h-4" />
-                </motion.button>
-              </div>
-            </div>
-
-            {/* Tab Navigation */}
-            <div className="flex space-x-1 mt-6 bg-gray-100 rounded-lg p-1">
-              {[
-                { key: 'JOB', label: 'Jobs', count: jobs.length },
-                { key: 'INTERNSHIP', label: 'Internships', count: internships.length }
-              ].map((tab) => (
-                <motion.button
-                  key={tab.key}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`flex-1 py-3 px-4 rounded-md font-medium text-sm transition-all ${
-                    activeTab === tab.key
-                      ? 'bg-white text-indigo-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {tab.label}
-                  <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                    activeTab === tab.key
-                      ? 'bg-indigo-100 text-indigo-600'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {tab.count}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          {/* Filter Panel */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="border-b border-gray-100"
-              >
-                <FilterPanel 
-                  type={activeTab} 
-                  onFilterChange={handleFilterChange} 
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Results */}
-          <div className="p-6">
-            {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full"
-                />
-              </div>
-            ) : error ? (
-              <div className="text-red-500 text-center py-6">{error}</div>
-            ) : activeTab === 'JOB' ? (
-              <JobInternshipTable 
-                data={jobs} 
-                type="JOB" 
-              />
-            ) : (
-              <JobInternshipTable 
-                data={internships} 
-                type="INTERNSHIP" 
-              />
-            )}
-          </div>
-        </motion.div>
       </main>
     </div>
   );

@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'https://excessive-pads-cooked-tips.trycloudflare.com/api',
+  baseURL: 'http://localhost:8000/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -117,7 +117,7 @@ export const updateInternship = (id, data) => api.patch(`/jobs/internship/update
 export const fetchInternshipDetails = (id) => api.get(`/jobs/internship/${id}/`);
 
 // ================= Password Change Endpoint =================
-export const changePassword = (data) => api.post('/users/change-password/', data);
+export const changePassword = (data) => api.patch('/users/profile/update/', data);
 
 // ================= Phone Verification Endpoints =================
 export const checkPhoneVerification = (data) => {

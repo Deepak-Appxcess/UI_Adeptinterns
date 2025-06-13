@@ -297,7 +297,7 @@ const EmployerDashboard = () => {
     }
 
     try {
-      await api.post('/users/change-password/', {
+      await api.patch('/users/profile/update/', {
         old_password: passwordFormData.old_password,
         new_password: passwordFormData.new_password
       });
