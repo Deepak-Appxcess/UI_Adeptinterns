@@ -56,7 +56,7 @@ api.interceptors.response.use(
         localStorage.removeItem('authToken');
         localStorage.removeItem('refreshToken');
         sessionStorage.removeItem('tempAuthToken');
-        window.location.href = '/users/login';
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
@@ -74,8 +74,6 @@ export const updateCandidateBio = (formData) => {
     }
   });
 };
-
-
 
 // Add to api.js
 export const setupEmployerProfile = (formData) => {
@@ -98,7 +96,7 @@ export const resendOTP = (data) => api.post('/users/resend-otp/', data);
 export const checkEmailExists = (email) => api.post('/users/check-email/', { email });
 
 // ================= User Profile Endpoints =================
- export const fetchUserProfile = () => api.get('/users/profile/');
+export const fetchUserProfile = () => api.get('/users/profile/');
 export const updateUserProfile = (data) => api.put('/users/profile/', data);
 
 // ================= Candidate (Student) Endpoints =================
@@ -111,17 +109,17 @@ export const fetchAppliedInternships = () => api.get('/users/candidate/applicati
 export const fetchEmployerProfile = () => api.get('/users/employer/profile/');
 export const fetchMyInternships = () => api.get('/users/dashboard/employer/');
 export const fetchMyJobs = () => api.get('/users/dashboard/employer/');
-// Add to api.js (in the Employer Endpoints section)
 export const createJobPosting = (data) => api.post('/jobs/create/', data);
-// Add to api.js (in the Employer Endpoints section)
 export const createInternship = (data) => api.post('/jobs/internship/create/', data);
-// Add to api.js (in the Employer Endpoints section)
 export const updateJobPosting = (id, data) => api.patch(`/jobs/update/${id}/`, data);
-export const fetchJobDetails = (id, data) => api.patch(`/jobs/update/${id}/`, data);
-// Add to api.js (in the Employer Endpoints section)
-
+export const fetchJobDetails = (id) => api.get(`/jobs/${id}/`);
 export const updateInternship = (id, data) => api.patch(`/jobs/internship/update/${id}/`, data);
-export const fetchInternshipDetails = (id) => api.patch(`/jobs/internship/update/${id}/`);  // Fixed URL // Add to api.js
+export const fetchInternshipDetails = (id) => api.get(`/jobs/internship/${id}/`);
+
+// ================= Password Change Endpoint =================
+export const changePassword = (data) => api.post('/users/change-password/', data);
+
+// ================= Phone Verification Endpoints =================
 export const checkPhoneVerification = (data) => {
   return api.post('/users/check-phone-verification/', data);
 };
@@ -161,19 +159,27 @@ export const createCourse = (data) => {
   });
 };
 
-
 export const updateCourse = (id, data) => api.patch(`/adept/${id}/`, data);
 export const deleteCourse = (id) => api.delete(`/adept/${id}/`);
 
-// Add to your api.js
+// ================= Auth Endpoints =================
 export const logout = (data) => api.post('/users/logout/', data);
-// Add to api.js
 export const updateProfile = (data) => {
   return api.patch('/users/profile/update/', data);
 };
 
+// ================= Jobs/Internships Endpoints =================
 export const fetchFilteredJobs = (params) => {
   return api.get('/jobs/filtered/', { params });
+};
+
+// ================= Job Application Endpoints =================
+export const applyForJob = (jobId, data) => {
+  return api.post(`/jobs/${jobId}/apply/`, data);
+};
+
+export const applyForInternship = (internshipId, data) => {
+  return api.post(`/jobs/internship/${internshipId}/apply/`, data);
 };
 
 export default api;
