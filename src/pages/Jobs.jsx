@@ -14,7 +14,8 @@ import {
   CheckCircle,
   Users,
   Star,
-  Building
+  Building,
+  User
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -517,16 +518,12 @@ function Jobs() {
                       )}
                       
                       <div className="flex items-center justify-between">
-                        <button
-                          onClick={() => toggleJobDetails(job.id)}
+                        <Link
+                          to={`/job/${job.id}`}
                           className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
                         >
-                          {expandedJobId === job.id ? (
-                            <>Less details <ChevronUp className="w-4 h-4 ml-1" /></>
-                          ) : (
-                            <>More details <ChevronDown className="w-4 h-4 ml-1" /></>
-                          )}
-                        </button>
+                          More details
+                        </Link>
                         
                         <Link
                           to={`/job/${job.id}`}

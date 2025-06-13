@@ -24,6 +24,7 @@ import PostJob from './pages/Dashboard/Employee/PostJob'
 import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
 import UpdateInternship from './pages/Dashboard/Employee/InternshipUpdate'
 import Employeeprofile from './pages/Dashboard/Employee/Profile'
+import JobDetails from './pages/JobDetails'
 import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
 import axios from 'axios';
 import { fetchCourses } from './services/api'; // Adjust path if needed
@@ -245,6 +246,7 @@ function App() {
               />
             } />
             <Route path="/jobs" element={<Jobs />} />
+            <Route path="/job/:id" element={<JobDetails />} />
             <Route path="/internships" element={<Internships />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
@@ -545,7 +547,7 @@ function Home({
                     </div>
                   </div>
                 )}
-                <button className="text-blue-500 hover:text-blue-600">View details →</button>
+                <Link to={`/job/${job.id}`} className="text-blue-500 hover:text-blue-600">View details →</Link>
               </div>
             )) : (
               <div className="col-span-3 text-center py-8">
