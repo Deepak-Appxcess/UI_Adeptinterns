@@ -45,6 +45,13 @@ const JobInternshipTable = ({ data, type }) => {
       navigate(`/employer/internships/update/${id}`);
     }
   };
+const handleApplication = (id, type) => {
+  if (type === 'JOB') {
+    navigate(`/applications/job/${id}`);
+  } else {
+    navigate(`/applications/internship/${id}`);
+  }
+};
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -207,6 +214,9 @@ const JobInternshipTable = ({ data, type }) => {
                     )}
                   </button>
                 </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                 Application
+                </th>
                 <th className="px-6 py-4 text-left">
                   <button
                     onClick={() => handleSort('created_at')}
@@ -322,6 +332,23 @@ const JobInternshipTable = ({ data, type }) => {
                           {getStatusIcon(item.status)}
                           <span className="ml-1 capitalize">{item.status || 'Draft'}</span>
                         </span>
+                      </td>
+
+                      {/* {application count} */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                         
+                          <span>{item.applications_count || 0} application{item.application_count !== 1 ? 's' : ''}</span>
+                           <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleApplication(item.id)}
+                              className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                              title="Edit"
+                            >
+                             <Users className="w-4 h-4 mr-2 text-gray-400" />
+                            </motion.button>
+                        </div>  
                       </td>
 
                       {/* Created Date Column */}

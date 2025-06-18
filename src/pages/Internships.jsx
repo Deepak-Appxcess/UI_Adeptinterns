@@ -534,16 +534,12 @@ function Internships() {
                       )}
                       
                       <div className="flex items-center justify-between">
-                        <button
-                          onClick={() => toggleInternshipDetails(internship.id)}
-                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
-                        >
-                          {expandedInternshipId === internship.id ? (
-                            <>Less details <ChevronUp className="w-4 h-4 ml-1" /></>
-                          ) : (
-                            <>More details <ChevronDown className="w-4 h-4 ml-1" /></>
-                          )}
-                        </button>
+                        <Link
+  to={`/internship/${internship.id}`}
+  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
+>
+  More details <ChevronDown className="w-4 h-4 ml-1" />
+</Link>
                         
                         <Link
                           to={`/internship/${internship.id}`}
@@ -553,62 +549,7 @@ function Internships() {
                         </Link>
                       </div>
                       
-                      <AnimatePresence>
-                        {expandedInternshipId === internship.id && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="mt-4 pt-4 border-t border-gray-100"
-                          >
-                            <div className="space-y-4">
-                              {internship.responsibilities && internship.responsibilities.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Responsibilities</h4>
-                                  <div className="text-sm text-gray-600 space-y-1">
-                                    {internship.responsibilities.map((resp, idx) => (
-                                      <p key={idx} className="flex items-start">
-                                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                                        {resp}
-                                      </p>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-900 mb-2">Additional Details</h4>
-                                <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                                  <div className="flex items-center">
-                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full mr-2 flex-shrink-0"></span>
-                                    {internship.is_paid ? 'Paid' : 'Unpaid'}
-                                  </div>
-                                  <div className="flex items-center">
-                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full mr-2 flex-shrink-0"></span>
-                                    {internship.is_part_time ? 'Part-time' : 'Full-time'}
-                                  </div>
-                                  <div className="flex items-center">
-                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full mr-2 flex-shrink-0"></span>
-                                    {internship.has_ppo ? 'PPO Available' : 'No PPO'}
-                                  </div>
-                                  <div className="flex items-center">
-                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full mr-2 flex-shrink-0"></span>
-                                    {internship.allow_women_returning ? 'Women Returning Welcome' : 'Standard Eligibility'}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {internship.candidate_preferences && (
-                                <div>
-                                  <h4 className="text-sm font-semibold text-gray-900 mb-2">Candidate Preferences</h4>
-                                  <p className="text-sm text-gray-600">{internship.candidate_preferences}</p>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      
                     </div>
                   </motion.div>
                 ))}

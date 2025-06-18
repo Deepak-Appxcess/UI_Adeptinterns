@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { updateCandidateBio, updateCandidatePreferences } from '../../../services/api';
 
-const StudentDashboard = () => {
+const StudentProfie= () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -647,4 +647,4 @@ const StudentDashboard = () => {
   );
 };
 
-export default StudentDashboard;
+export default StudentProfie;

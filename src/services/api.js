@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'https://always-laws-sun-terminals.trycloudflare.com/api',
+  baseURL: 'http://localhost:8000/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -104,7 +104,20 @@ export const fetchCandidateProfile = () => api.get('/users/candidate/profile/');
 export const updateCandidatePreferences = (data) => api.patch('/users/profile/candidate/preferences/', data);
 export const fetchAppliedJobs = () => api.get('/users/candidate/applications/jobs/');
 export const fetchAppliedInternships = () => api.get('/users/candidate/applications/internships/');
+// Add to src/services/api.js
 
+// Resume Endpoints
+export const getCandidateResume = () => {
+  return api.get('/jobs/candidate/resume/');
+};
+
+export const createOrUpdateCandidateResume = (data) => {
+  return api.post('/jobs/candidate/resume/', data);
+};
+
+export const deleteCandidateResume = () => {
+  return api.delete('/jobs/candidate/resume/');
+};
 // ================= Employer Endpoints =================
 export const fetchEmployerProfile = () => api.get('/users/employer/profile/');
 export const fetchMyInternships = () => api.get('/users/dashboard/employer/');
@@ -115,7 +128,24 @@ export const updateJobPosting = (id, data) => api.patch(`/jobs/update/${id}/`, d
 export const fetchJobDetails = (id) => api.get(`/jobs/${id}/`);
 export const updateInternship = (id, data) => api.patch(`/jobs/internship/update/${id}/`, data);
 export const fetchInternshipDetails = (id) => api.get(`/jobs/internship/${id}/`);
+// In services/api.js
+export const fetchApplications = (params = {}) => {
+  // Validate that either job_id or internship_id is provided when not fetching all
+  if (!params.job_id && !params.internship_id && !params.view_all) {
+    throw new Error('Either job_id or internship_id must be provided.');
+  }
+  return api.get('/jobs/applications/', { params });
+};
 
+// Fetch single application details
+export const fetchApplicationDetails = (applicationId) => {
+  return api.get(`/jobs/applications/${applicationId}/`);
+};
+
+// Update application status
+export const updateApplicationStatus = (applicationId, data) => {
+  return api.patch(`/jobs/applications/${applicationId}/status/`, data);
+};
 // ================= Password Change Endpoint =================
 export const changePassword = (data) => api.patch('/users/profile/update/', data);
 

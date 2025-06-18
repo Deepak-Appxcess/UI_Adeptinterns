@@ -62,6 +62,12 @@ function Navbar({ isDarkMode, toggleTheme }) {
     if (userRole === 'Candidate') return '/dashboard/student';
     return '/dashboard/student'; // fallback
   };
+  // Determine dashboard route based on user role
+const getProfileRoute = () => {
+  const role = userRole?.toLowerCase(); // userRole is null → role is undefined
+return role === 'employer' ? '/profile' : '/student/profile';
+
+};
 
   return (
     <>
@@ -100,15 +106,15 @@ function Navbar({ isDarkMode, toggleTheme }) {
                   Dashboard
                 </Link>
                 <Link 
-                  to="/profile" 
-                  className={`px-4 py-2 rounded-full text-sm ${
-                    isDarkMode 
-                      ? 'bg-black text-white' 
-                      : 'bg-white text-black'
-                  }`}
-                >
-                  Profile
-                </Link>
+  to={getProfileRoute()}
+  className={`px-4 py-2 rounded-full text-sm ${
+    isDarkMode 
+      ? 'bg-black text-white' 
+      : 'bg-white text-black'
+  }`}
+>
+  Profile
+</Link>
                 <button 
                   onClick={handleLogout}
                   className={`px-4 py-2 rounded-full text-sm border ${

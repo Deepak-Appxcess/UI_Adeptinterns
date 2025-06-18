@@ -20,6 +20,8 @@ import PostInternships from './pages/Dashboard/Employee/PostInternship'
 import StudentBio from './pages/Dashboard/Student/StudentBio'
 import StudentPreferences from './pages/Dashboard/Student/StudentPreferences'
 import PostJob from './pages/Dashboard/Employee/PostJob'
+import StudentProfile from './pages/Dashboard/Student/StudentProfile'
+import ApplicationViewPage from './pages/Dashboard/Employee/ApplicationViewPage'
 
 import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
 import UpdateInternship from './pages/Dashboard/Employee/InternshipUpdate'
@@ -29,6 +31,8 @@ import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
 import axios from 'axios';
 import { fetchCourses } from './services/api'; // Adjust path if needed
 import api from './services/api';
+import ApplicationDetailPage from './pages/Dashboard/Employee/ApplicationDetailPage'
+import InternshipDetails from './pages/InternshipDetails'
 
 
 // Protected Route Component
@@ -248,9 +252,10 @@ function App() {
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/job/:id" element={<JobDetails />} />
             <Route path="/internships" element={<Internships />} />
+        <Route path="/internship/:id" element={<InternshipDetails/>} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route 
+            <Route  
               path="/dashboard/employer" 
               element={
                 <ProtectedRoute>
@@ -270,10 +275,16 @@ function App() {
             <Route path="/employers" element={<EmployeeRegister/>} />
             <Route path="/student" element={<StudentRegister/>} />
             <Route path="/profile/candidate/bio" element={<StudentBio/>} />
+            
               <Route path="/student/preferences" element={<StudentPreferences />} />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Employeeprofile />
+              </ProtectedRoute>
+            } />
+            <Route path="/student/profile" element={
+              <ProtectedRoute>
+                <StudentProfile />
               </ProtectedRoute>
             } />
             
@@ -287,10 +298,15 @@ function App() {
                 <PostJob />
               </ProtectedRoute>
             } />
-            
-            <Route path="/employer/jobs/update/:id" element={<UpdateJob />} />
-            <Route path="/employer/internships/update/:id" element={<UpdateInternship />} />
-          </Routes>
+
+         
+<Route path="/applications" element={<ApplicationViewPage />} />
+<Route path="/applications/jobs" element={<ApplicationViewPage />} />
+<Route path="/applications/internships" element={<ApplicationViewPage />} />
+<Route path="/applications/job/:jobId" element={<ApplicationViewPage />} />
+<Route path="/applications/internship/:internshipId" element={<ApplicationViewPage />} />
+<Route path="/applications/:appId" element={<ApplicationDetailPage/>} />
+            </Routes>
 
           <Footer isDarkMode={isDarkMode} />
         </div>
