@@ -20,6 +20,7 @@ const ResumePage = () => {
     skills: [],
     portfolio_work_samples: [],
     accomplishments: [],
+    profile_details: {}
   });
   const [editMode, setEditMode] = useState(false);
 
@@ -29,21 +30,33 @@ const ResumePage = () => {
         setIsLoading(true);
         const response = await getCandidateResume();
         
-        if (response.data && !response.data.detail) {
-          setResumeData(response.data);
-          setFormData(response.data);
+        // Check if the response indicates no resume exists
+        if (response.data && response.data.detail === "Resume not found.") {
+          setResumeData(null);
+          setShowImportPopup(true);
+        } else if (response.data) {
+          // Resume exists, set the data
+          setResumeData({
+            ...response.data,
+            education: Array.isArray(response.data.education) ? response.data.education : [],
+            work_experiences: Array.isArray(response.data.work_experiences) ? response.data.work_experiences : [],
+            skills: Array.isArray(response.data.skills) ? response.data.skills : [],
+            // normalize other arrays similarly
+          });
+          setFormData({
+            ...response.data,
+            education: Array.isArray(response.data.education) ? response.data.education : [],
+            work_experiences: Array.isArray(response.data.work_experiences) ? response.data.work_experiences : [],
+            skills: Array.isArray(response.data.skills) ? response.data.skills : [],
+            // normalize other arrays similarly
+          });
           setEditMode(false);
           setShowImportPopup(false);
-        } else {
-          setShowImportPopup(true);
         }
       } catch (error) {
-        if (error.response && error.response.status === 404) {
-          setShowImportPopup(true);
-        } else {
-          toast.error('Failed to fetch resume data');
-          console.error('Error fetching resume:', error);
-        }
+        console.error('Error fetching resume:', error);
+        toast.error('Failed to load resume data');
+        setShowImportPopup(true);
       } finally {
         setIsLoading(false);
       }
@@ -105,30 +118,44 @@ const ResumePage = () => {
     return <div className="container mx-auto py-8">Loading resume data...</div>;
   }
 
+
   return (
     <div className="container mx-auto py-8 px-4">
-      {showImportPopup && (
-        <ImportResumePopup 
-          onClose={() => setShowImportPopup(false)}
-          onManualCreate={() => {
-            setShowImportPopup(false);
-            setEditMode(true);
-          }}
-          onParsedData={(parsedData) => {
-            setFormData(prev => ({
-              ...prev,
-              career_objective: parsedData.career_objective || '',
-              education: parsedData.education || [],
-              work_experiences: parsedData.work_experiences || [],
-              skills: parsedData.skills || [],
-              academic_projects: parsedData.academic_projects || [],
-              profile_details: parsedData.profile_details || {}
-            }));
-            setShowImportPopup(false);
-            setEditMode(true);
-          }}
-        />
-      )}
+     {/* In your main component render */}
+{showImportPopup && (
+  <ImportResumePopup 
+    onClose={() => {
+      // Only allow closing if resume exists
+      if (resumeData) {
+        setShowImportPopup(false);
+      }
+    }}
+    onManualCreate={() => {
+      setShowImportPopup(false);
+      setEditMode(true);
+      // Initialize empty form if creating manually
+      setFormData({
+        career_objective: '',
+        education: [],
+        work_experiences: [],
+        skills: [],
+        academic_projects: [],
+        profile_details: {}
+      });
+    }}
+    onParsedData={(parsedData) => {
+      setFormData(prev => ({
+        ...prev,
+        ...parsedData,
+        education: Array.isArray(parsedData.education) ? parsedData.education : [],
+        work_experiences: Array.isArray(parsedData.work_experiences) ? parsedData.work_experiences : [],
+        skills: Array.isArray(parsedData.skills) ? parsedData.skills : [],
+      }));
+      setShowImportPopup(false);
+      setEditMode(true);
+    }}
+  />
+)}
 
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-6">

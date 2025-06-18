@@ -117,6 +117,7 @@ export const createOrUpdateCandidateResume = (data) => {
 
 export const deleteCandidateResume = () => {
   return api.delete('/jobs/candidate/resume/');
+  
 };
 // ================= Employer Endpoints =================
 export const fetchEmployerProfile = () => api.get('/users/employer/profile/');

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
+import workerPath from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { parseResumeWithOpenAI } from './resumeParserUtils';
+
+pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
 
 function ResumeParser({ onParsedData }) {
   const [pdfFile, setPdfFile] = useState(null);
@@ -22,31 +25,24 @@ function ResumeParser({ onParsedData }) {
       setError('Please select a PDF file first');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Initialize PDF.js worker
-      pdfjs.GlobalWorkerOptions.workerSrc = 
-        `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-      
-      // Load the PDF document
       const arrayBuffer = await pdfFile.arrayBuffer();
-      const pdf = await pdfjs.getDocument(arrayBuffer).promise;
-      
-      // Extract text from all pages
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
       let fullText = '';
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         fullText += textContent.items.map(item => item.str).join(' ') + '\n';
       }
-      
-      // Parse with OpenAI
+
       const parsedData = await parseResumeWithOpenAI(fullText);
       onParsedData(parsedData);
-      
+
     } catch (error) {
       console.error('PDF Processing Error:', error);
       setError('Failed to process PDF. Please try another file.');
@@ -59,10 +55,10 @@ function ResumeParser({ onParsedData }) {
     <div className="flex flex-col gap-2">
       <label className="block bg-blue-500 text-white py-2 px-4 rounded cursor-pointer text-center">
         {pdfFile ? pdfFile.name : 'Upload resume'}
-        <input 
-          type="file" 
-          accept="application/pdf" 
-          className="hidden" 
+        <input
+          type="file"
+          accept="application/pdf"
+          className="hidden"
           onChange={handleFileChange}
           disabled={isLoading}
         />

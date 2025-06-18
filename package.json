@@ -26,7 +26,7 @@
     "lucide-react": "^0.511.0",
     "motion": "^12.12.1",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^5.3.31",
+    "pdfjs-dist": "^3.11.174",
     "postcss": "^8.4.35",
     "prop-types": "^15.8.1",
     "react": "^19.1.0",

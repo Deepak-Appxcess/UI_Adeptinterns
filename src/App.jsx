@@ -33,6 +33,7 @@ import { fetchCourses } from './services/api'; // Adjust path if needed
 import api from './services/api';
 import ApplicationDetailPage from './pages/Dashboard/Employee/ApplicationDetailPage'
 import InternshipDetails from './pages/InternshipDetails'
+import ResumePage from './pages/Resume/ResumePage'
 
 
 // Protected Route Component
@@ -275,6 +276,7 @@ function App() {
             <Route path="/employers" element={<EmployeeRegister/>} />
             <Route path="/student" element={<StudentRegister/>} />
             <Route path="/profile/candidate/bio" element={<StudentBio/>} />
+            <Route path="/resume" element={<ResumePage/>} />
             
               <Route path="/student/preferences" element={<StudentPreferences />} />
             <Route path="/profile" element={
