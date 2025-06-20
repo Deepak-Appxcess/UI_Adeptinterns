@@ -18,6 +18,7 @@ import {
   Briefcase,
   GraduationCap,
   Code,
+  Clock,
   Award,
   Star,
   Calendar,
