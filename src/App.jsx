@@ -558,7 +558,7 @@ function Home({
                 {job.skills_required && job.skills_required.length > 0 && (
                   <div className="mb-4">
                     <div className="flex flex-wrap gap-1">
-                      {job.skills_required.slice(0, 3).map((skill, idx) => (
+                      {job.skills_required.slice(0, 4).map((skill, idx) => (
                         <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                           {skill}
                         </span>
