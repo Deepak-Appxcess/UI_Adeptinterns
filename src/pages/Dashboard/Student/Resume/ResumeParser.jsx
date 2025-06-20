@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import workerPath from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { parseResumeWithOpenAI } from './resumeParserUtils';
+import { FileText, Upload, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
 
@@ -9,12 +10,21 @@ function ResumeParser({ onParsedData }) {
   const [pdfFile, setPdfFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
       setError(null);
+      
+      // Simulate upload progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        setUploadProgress(Math.min(progress, 90));
+        if (progress >= 90) clearInterval(interval);
+      }, 200);
     } else {
       setError('Please upload a valid PDF file');
     }
@@ -41,44 +51,98 @@ function ResumeParser({ onParsedData }) {
       }
 
       const parsedData = await parseResumeWithOpenAI(fullText);
+      setUploadProgress(100);
       onParsedData(parsedData);
 
     } catch (error) {
       console.error('PDF Processing Error:', error);
-      setError('Failed to process PDF. Please try another file.');
+      setError('Failed to process PDF. Please try another file or create your resume manually.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <label className="block bg-blue-500 text-white py-2 px-4 rounded cursor-pointer text-center">
-        {pdfFile ? pdfFile.name : 'Upload resume'}
-        <input
-          type="file"
-          accept="application/pdf"
-          className="hidden"
-          onChange={handleFileChange}
-          disabled={isLoading}
-        />
-      </label>
-      {pdfFile && (
-        <button
-          onClick={extractText}
-          disabled={isLoading}
-          className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {isLoading ? 'Processing...' : 'Parse Resume'}
-        </button>
-      )}
-      {error && (
-        <p className="text-red-500 text-sm mt-2">
-          {error}
-          {error.includes('process PDF') && (
-            <span className="block mt-1">Make sure the PDF is not password protected and contains selectable text.</span>
+    <div className="space-y-4">
+      {!pdfFile ? (
+        <label className="block w-full cursor-pointer">
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#18005F] transition-colors">
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-700 font-medium mb-2">Drag & drop your resume PDF here</p>
+            <p className="text-gray-500 text-sm mb-4">or click to browse files</p>
+            <button className="inline-flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-sm">
+              <Upload className="w-4 h-4 mr-2" />
+              Select PDF
+            </button>
+          </div>
+          <input
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleFileChange}
+            disabled={isLoading}
+          />
+        </label>
+      ) : (
+        <div className="border-2 border-gray-300 rounded-xl p-6">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-[#18005F]/10 rounded-lg flex items-center justify-center mr-3">
+              <FileText className="w-5 h-5 text-[#18005F]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-gray-900 font-medium truncate">{pdfFile.name}</p>
+              <p className="text-gray-500 text-sm">{(pdfFile.size / 1024).toFixed(1)} KB</p>
+            </div>
+            <button
+              onClick={() => setPdfFile(null)}
+              className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          
+          {/* Progress bar */}
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <div 
+                className="bg-[#18005F] h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
           )}
-        </p>
+          
+          <button
+            onClick={extractText}
+            disabled={isLoading}
+            className="w-full inline-flex items-center justify-center px-4 py-3 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Processing Resume...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Parse Resume
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 flex items-start">
+          <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">{error}</p>
+            {error.includes('process PDF') && (
+              <p className="mt-1 text-sm">Make sure the PDF is not password protected and contains selectable text.</p>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
