@@ -553,7 +553,7 @@ function Home({
                   {formatSalary(job.fixed_pay_min, job.fixed_pay_max)}
                 </p>
                 <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>
-                  {job.job_description?.[0] || 'Join our team and make an impact with your skills.'}
+
                 </p>
                 {job.skills_required && job.skills_required.length > 0 && (
                   <div className="mb-4">
