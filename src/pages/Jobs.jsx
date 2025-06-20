@@ -150,10 +150,10 @@ function Jobs() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Find Jobs</h1>
@@ -161,7 +161,7 @@ function Jobs() {
                 {totalJobs > 0 ? `${totalJobs.toLocaleString()} jobs available` : 'Discover your next opportunity'}
               </p>
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
               Page {currentPage} of {totalPages}
             </div>
           </div>
@@ -173,9 +173,9 @@ function Jobs() {
           {/* Sidebar Filters - Fixed Sticky */}
           <div className="w-72 flex-shrink-0">
             <div className="sticky top-4">
-              <div className="bg-white rounded-lg border border-gray-100 shadow-sm">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-lg">
                 {/* Filter Header */}
-                <div className="px-4 py-3 border-b border-gray-100">
+                <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-gray-900 flex items-center">
                       <Filter className="w-4 h-4 mr-2 text-[#18005F]" />
@@ -183,7 +183,7 @@ function Jobs() {
                     </h2>
                     <button 
                       onClick={clearFilters}
-                      className="text-sm text-[#18005F] hover:text-[#18005F]/80 font-medium"
+                      className="text-sm text-[#18005F] hover:text-[#18005F]/80 font-medium hover:bg-white px-2 py-1 rounded transition-colors"
                     >
                       Clear all
                     </button>
@@ -191,10 +191,10 @@ function Jobs() {
                 </div>
 
                 {/* Filter Content */}
-                <div className="p-4 space-y-4 max-h-[calc(100vh-150px)] overflow-y-auto">
+                <div className="p-5 space-y-6 max-h-[calc(100vh-150px)] overflow-y-auto">
                   {/* Search */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Search Jobs
                     </label>
                     <form onSubmit={handleSearchSubmit}>
@@ -205,25 +205,25 @@ function Jobs() {
                           placeholder="Job title, skills, company..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-1 focus:ring-[#18005F] focus:border-[#18005F] text-sm"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] text-sm bg-gray-50 hover:bg-white transition-colors shadow-sm"
                         />
                       </div>
                     </form>
                   </div>
 
                   {/* Job Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Job Type
                     </label>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[
                         { value: '', label: 'All Types' },
                         { value: 'REMOTE', label: 'Remote' },
                         { value: 'HYBRID', label: 'Hybrid' },
                         { value: 'IN_OFFICE', label: 'In Office' }
                       ].map((option) => (
-                        <label key={option.value} className="flex items-center">
+                        <label key={option.value} className="flex items-center bg-white p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
                           <input
                             type="radio"
                             name="job_type"
@@ -232,24 +232,24 @@ function Jobs() {
                             onChange={handleFilterChange}
                             className="h-4 w-4 text-[#18005F] focus:ring-[#18005F] border-gray-300"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                          <span className="ml-3 text-sm text-gray-700 font-medium">{option.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   {/* Work Schedule */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Work Schedule
                     </label>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[
                         { value: '', label: 'All Schedules' },
                         { value: 'FULL_TIME', label: 'Full Time' },
                         { value: 'PART_TIME', label: 'Part Time' }
                       ].map((option) => (
-                        <label key={option.value} className="flex items-center">
+                        <label key={option.value} className="flex items-center bg-white p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
                           <input
                             type="radio"
                             name="work_schedule"
@@ -258,18 +258,18 @@ function Jobs() {
                             onChange={handleFilterChange}
                             className="h-4 w-4 text-[#18005F] focus:ring-[#18005F] border-gray-300"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                          <span className="ml-3 text-sm text-gray-700 font-medium">{option.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   {/* Experience Level */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Experience Level
                     </label>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[
                         { value: '', label: 'All Levels' },
                         { value: '0', label: 'Entry Level (0 years)' },
@@ -277,7 +277,7 @@ function Jobs() {
                         { value: '3', label: 'Mid-level (3+ years)' },
                         { value: '5', label: 'Senior (5+ years)' }
                       ].map((option) => (
-                        <label key={option.value} className="flex items-center">
+                        <label key={option.value} className="flex items-center bg-white p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
                           <input
                             type="radio"
                             name="minimum_experience_years"
@@ -286,18 +286,18 @@ function Jobs() {
                             onChange={handleFilterChange}
                             className="h-4 w-4 text-[#18005F] focus:ring-[#18005F] border-gray-300"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                          <span className="ml-3 text-sm text-gray-700 font-medium">{option.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   {/* Salary Range */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Salary Range (₹/year)
                     </label>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[
                         { min: '', max: '', label: 'All Salaries' },
                         { min: '', max: '500000', label: 'Under ₹5L' },
@@ -306,7 +306,7 @@ function Jobs() {
                         { min: '1500000', max: '2000000', label: '₹15L - ₹20L' },
                         { min: '2000000', max: '', label: 'Above ₹20L' }
                       ].map((range, index) => (
-                        <label key={index} className="flex items-center">
+                        <label key={index} className="flex items-center bg-white p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
                           <input
                             type="radio"
                             name="salary_range"
@@ -318,25 +318,25 @@ function Jobs() {
                             }))}
                             className="h-4 w-4 text-[#18005F] focus:ring-[#18005F] border-gray-300"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{range.label}</span>
+                          <span className="ml-3 text-sm text-gray-700 font-medium">{range.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   {/* Benefits */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                       Benefits
                     </label>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[
                         { name: 'has_five_day_week', label: '5-Day Work Week' },
                         { name: 'has_health_insurance', label: 'Health Insurance' },
                         { name: 'has_life_insurance', label: 'Life Insurance' },
                         { name: 'allow_women_returning', label: 'Women Returning to Work' }
                       ].map((benefit) => (
-                        <label key={benefit.name} className="flex items-center">
+                        <label key={benefit.name} className="flex items-center bg-white p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
                           <input
                             type="checkbox"
                             name={benefit.name}
@@ -344,7 +344,7 @@ function Jobs() {
                             onChange={handleFilterChange}
                             className="h-4 w-4 text-[#18005F] focus:ring-[#18005F] border-gray-300 rounded"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{benefit.label}</span>
+                          <span className="ml-3 text-sm text-gray-700 font-medium">{benefit.label}</span>
                         </label>
                       ))}
                     </div>
@@ -357,18 +357,18 @@ function Jobs() {
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             {/* Sort and View Options */}
-            <div className="bg-white rounded-lg border border-gray-100 p-4 mb-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-600">Sort by:</span>
-                  <select className="border border-gray-200 rounded-md px-3 py-1 text-sm focus:ring-1 focus:ring-[#18005F] focus:border-[#18005F]">
+                  <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                  <select className="border border-gray-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] bg-gray-50 hover:bg-white transition-colors shadow-sm">
                     <option value="relevance">Most Relevant</option>
                     <option value="recent">Most Recent</option>
                     <option value="salary_high">Highest Salary</option>
                     <option value="salary_low">Lowest Salary</option>
                   </select>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
                   Showing {jobs.length} of {totalJobs} jobs
                 </div>
               </div>
@@ -376,25 +376,26 @@ function Jobs() {
 
             {/* Jobs Grid - 3 per row */}
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[1, 2, 3, 4, 5, 6].map((index) => (
-                  <div key={index} className="bg-white rounded-lg border border-gray-100 p-4 animate-pulse">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                  <div key={index} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse shadow-sm">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-12 h-12 bg-gray-200 rounded-xl"></div>
                       <div className="flex-1 space-y-2">
                         <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                         <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="h-3 bg-gray-200 rounded"></div>
                       <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : error ? (
-              <div className="bg-white rounded-lg border border-gray-100 p-8 text-center">
+              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-lg">
                 <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <X className="w-8 h-8 text-red-500" />
                 </div>
@@ -402,13 +403,13 @@ function Jobs() {
                 <p className="text-gray-600 mb-4">{error}</p>
                 <button
                   onClick={fetchJobs}
-                  className="px-4 py-2 bg-[#18005F] text-white rounded-md hover:bg-[#18005F]/90 transition-colors"
+                  className="px-6 py-3 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-md hover:shadow-lg"
                 >
                   Try Again
                 </button>
               </div>
             ) : jobs.length === 0 ? (
-              <div className="bg-white rounded-lg border border-gray-100 p-8 text-center">
+              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-lg">
                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Briefcase className="w-8 h-8 text-gray-400" />
                 </div>
@@ -416,78 +417,80 @@ function Jobs() {
                 <p className="text-gray-600 mb-4">Try adjusting your filters to see more results.</p>
                 <button
                   onClick={clearFilters}
-                  className="px-4 py-2 bg-[#18005F] text-white rounded-md hover:bg-[#18005F]/90 transition-colors"
+                  className="px-6 py-3 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-md hover:shadow-lg"
                 >
                   Clear Filters
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {jobs.map((job) => (
-                  <div key={job.id} className="bg-white rounded-lg border border-gray-100 hover:border-[#18005F] hover:shadow-lg transition-all duration-200 group">
-                    <div className="p-4">
+                  <div key={job.id} className="bg-white rounded-xl border border-gray-200 hover:border-[#18005F] hover:shadow-xl transition-all duration-300 group shadow-md">
+                    <div className="p-5">
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-3">
-                          <img
-                            src={getCompanyLogo(job.company_logo_url, job.employer_organization?.organization_name)}
-                            alt="Company Logo"
-                            className="w-10 h-10 rounded-lg border border-gray-100"
-                            onError={(e) => {
-                              e.target.src = getCompanyLogo(null, job.employer_organization?.organization_name);
-                            }}
-                          />
+                          <div className="relative">
+                            <img
+                              src={getCompanyLogo(job.company_logo_url, job.employer_organization?.organization_name)}
+                              alt="Company Logo"
+                              className="w-12 h-12 rounded-xl border border-gray-100 shadow-sm"
+                              onError={(e) => {
+                                e.target.src = getCompanyLogo(null, job.employer_organization?.organization_name);
+                              }}
+                            />
+                          </div>
                           <div>
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
-                              <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></div>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200 shadow-sm">
+                              <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                               Hiring
                             </span>
                           </div>
                         </div>
-                        <button className="p-1 rounded-full hover:bg-gray-50 transition-colors">
-                          <Bookmark className="w-4 h-4 text-gray-400 hover:text-[#18005F]" />
+                        <button className="p-2 rounded-full hover:bg-gray-50 transition-colors group-hover:bg-[#18005F]/5">
+                          <Bookmark className="w-4 h-4 text-gray-400 hover:text-[#18005F] transition-colors" />
                         </button>
                       </div>
 
                       {/* Job Title & Company */}
-                      <div className="mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-[#18005F] transition-colors line-clamp-2 mb-1">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#18005F] transition-colors line-clamp-2 mb-2">
                           <Link to={`/job/${job.id}`}>
                             {job.job_title}
                           </Link>
                         </h3>
-                        <p className="text-gray-600 text-sm">
+                        <p className="text-gray-600 text-sm font-medium">
                           {job.employer_organization?.organization_name || 'Company Name'}
                         </p>
                       </div>
 
                       {/* Job Details */}
-                      <div className="space-y-2 mb-3">
-                        <div className="flex items-center text-sm text-gray-600">
+                      <div className="space-y-3 mb-4">
+                        <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
                           <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                          {getWorkType(job.job_type, job.work_schedule)}
+                          <span className="font-medium">{getWorkType(job.job_type, job.work_schedule)}</span>
                         </div>
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
                           <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
-                          {formatSalary(job.fixed_pay_min, job.fixed_pay_max)}
+                          <span className="font-medium">{formatSalary(job.fixed_pay_min, job.fixed_pay_max)}</span>
                         </div>
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
                           <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                          {job.minimum_experience_years || 0} years exp
+                          <span className="font-medium">{job.minimum_experience_years || 0} years exp</span>
                         </div>
                       </div>
 
                       {/* Skills */}
                       {job.skills_required && job.skills_required.length > 0 && (
-                        <div className="mb-3">
-                          <div className="flex flex-wrap gap-1">
+                        <div className="mb-4">
+                          <div className="flex flex-wrap gap-2">
                             {job.skills_required.slice(0, 3).map((skill, idx) => (
-                              <span key={idx} className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-[#18005F]/10 text-[#18005F]">
+                              <span key={idx} className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-[#18005F]/10 text-[#18005F] border border-[#18005F]/20">
                                 {skill}
                               </span>
                             ))}
                             {job.skills_required.length > 3 && (
-                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                              <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
                                 +{job.skills_required.length - 3}
                               </span>
                             )}
@@ -496,13 +499,13 @@ function Jobs() {
                       )}
 
                       {/* Footer */}
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-                        <div className="text-xs text-gray-500">
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
                           {formatDate(job.created_at)}
                         </div>
                         <Link
                           to={`/job/${job.id}`}
-                          className="inline-flex items-center px-3 py-1.5 bg-[#18005F] text-white rounded-md hover:bg-[#18005F]/90 transition-colors text-sm font-medium"
+                          className="inline-flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-all text-sm font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                         >
                           Apply Now
                         </Link>
@@ -515,15 +518,15 @@ function Jobs() {
 
             {/* Pagination */}
             {!loading && !error && jobs.length > 0 && totalPages > 1 && (
-              <div className="mt-6 flex justify-center">
-                <nav className="flex items-center space-x-2">
+              <div className="mt-8 flex justify-center">
+                <nav className="flex items-center space-x-2 bg-white rounded-xl p-2 shadow-lg border border-gray-200">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       currentPage === 1
                         ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 shadow-sm'
                     }`}
                   >
                     Previous
@@ -535,10 +538,10 @@ function Jobs() {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                           currentPage === pageNum
-                            ? 'bg-[#18005F] text-white'
-                            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                            ? 'bg-[#18005F] text-white shadow-md'
+                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100 shadow-sm'
                         }`}
                       >
                         {pageNum}
@@ -549,10 +552,10 @@ function Jobs() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       currentPage === totalPages
                         ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 shadow-sm'
                     }`}
                   >
                     Next
