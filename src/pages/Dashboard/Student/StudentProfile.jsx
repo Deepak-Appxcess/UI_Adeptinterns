@@ -30,6 +30,7 @@ import {
   updateCandidatePreferences 
 } from '../../../services/api';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 
 const StudentProfile = () => {
   const [activeSection, setActiveSection] = useState('personal');
