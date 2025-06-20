@@ -47,10 +47,6 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedFilter, setSelectedFilter] = useState('All')
-  const [selectedLocation, setSelectedLocation] = useState('All Locations')
-  const [selectedSalary, setSelectedSalary] = useState('All Salaries')
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [featuredJobs, setFeaturedJobs] = useState([]);
   const [featuredInternships, setFeaturedInternships] = useState([]);
@@ -123,50 +119,6 @@ function App() {
     setIsDarkMode(!isDarkMode)
   }
 
-  const filters = [
-    'All',
-    'Engineering',
-    'Media',
-    'Design',
-    'Data Science',
-    'Most Popular',
-    'IIT Madras Pravartak Certified',
-    'Programming',
-    'Business & Management',
-    'Core Engineering',
-    'Creative Arts',
-    'Language',
-    'Career Development'
-  ]
-
-  const locations = [
-    'All Locations',
-    'Delhi',
-    'Bangalore',
-    'Mumbai',
-    'Pune',
-    'Hyderabad',
-    'Remote'
-  ]
-
-  const salaryRanges = [
-    'All Salaries',
-    'Below ₹5L',
-    '₹5L - ₹10L',
-    '₹10L - ₹15L',
-    '₹15L - ₹20L',
-    'Above ₹20L'
-  ]
-
-  const getSalaryRange = (salary) => {
-    const amount = parseInt(salary.match(/\d+/g)[0])
-    if (amount < 500000) return 'Below ₹5L'
-    if (amount < 1000000) return '₹5L - ₹10L'
-    if (amount < 1500000) return '₹10L - ₹15L'
-    if (amount < 2000000) return '₹15L - ₹20L'
-    return 'Above ₹20L'
-  }
-
   // Helper function to format salary
   const formatSalary = (min, max) => {
     if (!min && !max) return 'Salary not disclosed';
@@ -198,19 +150,15 @@ function App() {
     return `${type} • ${schedule}`;
   };
 
-  const filteredJobs = featuredJobs.filter(job => {
-    const matchesSearch = job.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         job.employer_organization?.organization_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter = selectedFilter === 'All' || job.skills_required?.some(skill => 
-      skill.toLowerCase().includes(selectedFilter.toLowerCase())
-    )
-    const matchesLocation = selectedLocation === 'All Locations' || 
-                           job.job_type?.includes(selectedLocation) ||
-                           selectedLocation === 'Remote'
-    const salaryString = formatSalary(job.fixed_pay_min, job.fixed_pay_max);
-    const matchesSalary = selectedSalary === 'All Salaries' || getSalaryRange(salaryString) === selectedSalary
-    return matchesSearch && matchesFilter && matchesLocation && matchesSalary
-  })
+  // Helper function to get company logo with fallback
+  const getCompanyLogo = (logoUrl, companyName) => {
+    if (logoUrl) {
+      return logoUrl;
+    }
+    // Default logo based on company name initial or generic building icon
+    const initial = companyName?.charAt(0)?.toUpperCase() || 'C';
+    return `https://ui-avatars.com/api/?name=${initial}&background=6366f1&color=fff&size=40&rounded=true`;
+  };
 
   return (
      <GoogleOAuthProvider clientId="380706120194-tlm6ibu4b4jun9tssfgpcgib1mkflqir.apps.googleusercontent.com">
@@ -228,18 +176,6 @@ function App() {
             <Route path="/" element={
               <Home 
                 isDarkMode={isDarkMode} 
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                selectedFilter={selectedFilter}
-                setSelectedFilter={setSelectedFilter}
-                selectedLocation={selectedLocation}
-                setSelectedLocation={setSelectedLocation}
-                selectedSalary={selectedSalary}
-                setSelectedSalary={setSelectedSalary}
-                filters={filters}
-                locations={locations}
-                salaryRanges={salaryRanges}
-                filteredJobs={filteredJobs}
                 featuredJobs={featuredJobs}
                 featuredInternships={featuredInternships}
                 featuredCourses={featuredCourses}
@@ -249,6 +185,7 @@ function App() {
                 formatStipend={formatStipend}
                 getWorkType={getWorkType}
                 getInternshipType={getInternshipType}
+                getCompanyLogo={getCompanyLogo}
               />
             } />
             <Route path="/jobs" element={<Jobs />} />
@@ -325,18 +262,6 @@ function App() {
 
 function Home({ 
   isDarkMode, 
-  searchQuery, 
-  setSearchQuery, 
-  selectedFilter, 
-  setSelectedFilter,
-  selectedLocation,
-  setSelectedLocation,
-  selectedSalary,
-  setSelectedSalary,
-  filters,
-  locations,
-  salaryRanges,
-  filteredJobs,
   featuredJobs,
   featuredInternships,
   featuredCourses,
@@ -345,8 +270,58 @@ function Home({
   formatSalary,
   formatStipend,
   getWorkType,
-  getInternshipType
+  getInternshipType,
+  getCompanyLogo
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'jobs', 'internships'
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setSearchLoading(true);
+    try {
+      let results = [];
+      
+      if (activeTab === 'all' || activeTab === 'jobs') {
+        const jobsResponse = await api.get('/jobs/filtered/', {
+          params: { 
+            opportunity_type: 'JOB',
+            skills_required: searchQuery
+          }
+        });
+        results = [...results, ...jobsResponse.data.results.map(job => ({ ...job, type: 'job' }))];
+      }
+      
+      if (activeTab === 'all' || activeTab === 'internships') {
+        const internshipsResponse = await api.get('/jobs/filtered/', {
+          params: { 
+            opportunity_type: 'INTERNSHIP',
+            skills_required: searchQuery
+          }
+        });
+        results = [...results, ...internshipsResponse.data.results.map(internship => ({ ...internship, type: 'internship' }))];
+      }
+      
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleViewAll = (type) => {
+    if (type === 'jobs') {
+      navigate('/jobs');
+    } else if (type === 'internships') {
+      navigate('/internships');
+    }
+  };
 
   return (
     <main className="container mx-auto px-4 md:px-8">
@@ -443,6 +418,165 @@ function Home({
         </div>
       </div>
 
+      {/* Common Search Section */}
+      <section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-4xl font-bold mb-4">Find Your Perfect Opportunity</h2>
+          <p className={`text-lg ${isDarkMode ? 'text-white/80' : 'text-black/80'}`}>
+            Search through thousands of jobs and internships
+          </p>
+        </div>
+
+        {/* Search Form */}
+        <form onSubmit={handleSearch} className="max-w-4xl mx-auto mb-8">
+          <div className={`${isDarkMode ? 'bg-white/10' : 'bg-black/5'} rounded-2xl p-6 backdrop-blur-sm`}>
+            {/* Search Tabs */}
+            <div className="flex justify-center mb-6">
+              <div className={`${isDarkMode ? 'bg-white/10' : 'bg-black/10'} rounded-xl p-1 flex`}>
+                {[
+                  { key: 'all', label: 'All Opportunities' },
+                  { key: 'jobs', label: 'Jobs Only' },
+                  { key: 'internships', label: 'Internships Only' }
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeTab === tab.key
+                        ? isDarkMode
+                          ? 'bg-white text-black'
+                          : 'bg-black text-white'
+                        : isDarkMode
+                        ? 'text-white/80 hover:text-white'
+                        : 'text-black/80 hover:text-black'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Search Input */}
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Search by skills, job title, or company..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full px-6 py-4 rounded-xl text-lg ${
+                    isDarkMode 
+                      ? 'bg-white/10 text-white placeholder-white/60 border-white/20' 
+                      : 'bg-white text-black placeholder-black/60 border-black/20'
+                  } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={searchLoading}
+                className={`px-8 py-4 rounded-xl font-semibold transition-all ${
+                  isDarkMode
+                    ? 'bg-white text-black hover:bg-white/90'
+                    : 'bg-black text-white hover:bg-black/90'
+                } ${searchLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {searchLoading ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+
+            {/* Quick Filters */}
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              {['React', 'Python', 'JavaScript', 'Data Science', 'UI/UX', 'Marketing'].map((skill) => (
+                <button
+                  key={skill}
+                  type="button"
+                  onClick={() => setSearchQuery(skill)}
+                  className={`px-4 py-2 rounded-full text-sm ${
+                    isDarkMode
+                      ? 'bg-white/10 text-white/80 hover:bg-white/20'
+                      : 'bg-black/10 text-black/80 hover:bg-black/20'
+                  } transition-all`}
+                >
+                  {skill}
+                </button>
+              ))}
+            </div>
+          </div>
+        </form>
+
+        {/* Search Results */}
+        {searchResults.length > 0 && (
+          <div className="max-w-6xl mx-auto mb-16">
+            <h3 className="text-xl font-semibold mb-6">Search Results ({searchResults.length})</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {searchResults.slice(0, 6).map((item, index) => (
+                <div key={`${item.type}-${item.id}`} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
+                  <div className="flex items-center mb-3">
+                    <img
+                      src={getCompanyLogo(item.company_logo_url, item.employer_organization?.organization_name)}
+                      alt="Company Logo"
+                      className="w-10 h-10 rounded-lg mr-3"
+                      onError={(e) => {
+                        e.target.src = getCompanyLogo(null, item.employer_organization?.organization_name);
+                      }}
+                    />
+                    <div>
+                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                        item.type === 'job' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {item.type === 'job' ? 'Job' : 'Internship'}
+                      </span>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {item.type === 'job' ? item.job_title : item.internship_profile_title}
+                  </h3>
+                  <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
+                    {item.employer_organization?.organization_name || 'Company Name'}
+                  </p>
+                  <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>
+                    {item.type === 'job' 
+                      ? getWorkType(item.job_type, item.work_schedule)
+                      : getInternshipType(item.internship_type, item.is_part_time)
+                    }
+                  </p>
+                  <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-4`}>
+                    {item.type === 'job' 
+                      ? formatSalary(item.fixed_pay_min, item.fixed_pay_max)
+                      : formatStipend(item.fixed_stipend_min, item.fixed_stipend_max, item.is_paid)
+                    }
+                  </p>
+                  <Link 
+                    to={item.type === 'job' ? `/job/${item.id}` : `/internship/${item.id}`} 
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    View details →
+                  </Link>
+                </div>
+              ))}
+            </div>
+            {searchResults.length > 6 && (
+              <div className="text-center mt-6">
+                <button
+                  onClick={() => handleViewAll(activeTab === 'jobs' ? 'jobs' : activeTab === 'internships' ? 'internships' : 'jobs')}
+                  className={`px-6 py-3 rounded-xl font-semibold ${
+                    isDarkMode
+                      ? 'bg-white text-black hover:bg-white/90'
+                      : 'bg-black text-white hover:bg-black/90'
+                  } transition-all`}
+                >
+                  View All Results
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* Featured Jobs Section */}
       <section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
         <div className="flex justify-between items-center mb-8">
@@ -450,81 +584,9 @@ function Home({
           <Link to="/jobs" className="text-blue-500 hover:text-blue-600">View all →</Link>
         </div>
 
-        {/* Search and Filter Container */}
-        <div className="mb-8">
-          {/* Search Bar and Dropdowns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {/* Search Bar */}
-            <input
-              type="text"
-              placeholder="Search jobs by title or company..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg ${
-                isDarkMode 
-                  ? 'bg-white/5 text-white border-white/10' 
-                  : 'bg-blue/5 text-black border-black/10'
-              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            />
-
-            {/* Location Dropdown */}
-            <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg ${
-                isDarkMode 
-                  ? 'bg-white/5 text-white border-white/10' 
-                  : 'bg-blue/5 text-black border-black/10'
-              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            >
-              {locations.map(location => (
-                <option key={location} value={location}>{location}</option>
-              ))}
-            </select>
-
-            {/* Salary Range Dropdown */}
-            <select
-              value={selectedSalary}
-              onChange={(e) => setSelectedSalary(e.target.value)}
-              className={`w-full px-4 py-2 rounded-lg ${
-                isDarkMode 
-                  ? 'bg-white/5 text-white border-white/10' 
-                  : 'bg-black/5 text-black border-black/10'
-              } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            >
-              {salaryRanges.map(range => (
-                <option key={range} value={range}>{range}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Category Filters */}
-          <div className="overflow-x-auto">
-            <div className="flex space-x-2 pb-2">
-              {filters.map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setSelectedFilter(filter)}
-                  className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
-                    selectedFilter === filter
-                      ? isDarkMode
-                        ? 'bg-white text-black'
-                        : 'bg-black text-white'
-                      : isDarkMode
-                      ? 'bg-white/10 text-white'
-                      : 'bg-black/10 text-black'
-                  }`}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Job Cards */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((index) => (
               <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 animate-pulse`}>
                 <div className="h-4 bg-gray-300 rounded mb-2"></div>
@@ -536,13 +598,23 @@ function Home({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {filteredJobs.length > 0 ? filteredJobs.map((job, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredJobs.length > 0 ? featuredJobs.map((job, index) => (
               <div key={job.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
-                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mb-2">
-                  Actively hiring
-                </span>
-                <h3 className="text-xl font-semibold mb-2">{job.job_title}</h3>
+                <div className="flex items-center mb-3">
+                  <img
+                    src={getCompanyLogo(job.company_logo_url, job.employer_organization?.organization_name)}
+                    alt="Company Logo"
+                    className="w-10 h-10 rounded-lg mr-3"
+                    onError={(e) => {
+                      e.target.src = getCompanyLogo(null, job.employer_organization?.organization_name);
+                    }}
+                  />
+                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                    Actively hiring
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{job.job_title}</h3>
                 <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
                   {job.employer_organization?.organization_name || 'Company Name'}
                 </p>
@@ -608,7 +680,27 @@ function Home({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredInternships.length > 0 ? featuredInternships.map((internship, index) => (
               <div key={internship.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
-                <h3 className="text-xl font-semibold mb-2">{internship.internship_profile_title}</h3>
+                <div className="flex items-center mb-3">
+                  <img
+                    src={getCompanyLogo(internship.company_logo_url, internship.employer_organization?.organization_name)}
+                    alt="Company Logo"
+                    className="w-10 h-10 rounded-lg mr-3"
+                    onError={(e) => {
+                      e.target.src = getCompanyLogo(null, internship.employer_organization?.organization_name);
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                      Actively hiring
+                    </span>
+                    {internship.has_ppo && (
+                      <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                        PPO Available
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{internship.internship_profile_title}</h3>
                 <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
                   {internship.employer_organization?.organization_name || 'Company Name'}
                 </p>
@@ -622,7 +714,8 @@ function Home({
                   Stipend: {formatStipend(internship.fixed_stipend_min, internship.fixed_stipend_max, internship.is_paid)}
                 </p>
                 <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>
-                  {internship.responsibilities?.[0] || 'Gain hands-on experience and learn from experienced professionals.'}
+                  {internship.responsibilities?.[0]?.substring(0, 100) || 'Gain hands-on experience and learn from experienced professionals.'}
+                  {internship.responsibilities?.[0]?.length > 100 && '...'}
                 </p>
                 {internship.skills_required && internship.skills_required.length > 0 && (
                   <div className="mb-4">
@@ -638,13 +731,6 @@ function Home({
                         </span>
                       )}
                     </div>
-                  </div>
-                )}
-                {internship.has_ppo && (
-                  <div className="mb-2">
-                    <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
-                      PPO Available
-                    </span>
                   </div>
                 )}
                 <Link to={`/internship/${internship.id}`} className="text-blue-500 hover:text-blue-600">View details →</Link>
