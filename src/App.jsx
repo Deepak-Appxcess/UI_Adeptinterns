@@ -91,8 +91,8 @@ function App() {
           }
         });
 
-        // Set featured jobs (first 3)
-        setFeaturedJobs(jobsResponse.data.results?.slice(0, 3) || []);
+        // Set featured jobs (first 4)
+        setFeaturedJobs(jobsResponse.data.results?.slice(0, 4) || []);
         
         // Set featured internships (first 3)
         setFeaturedInternships(internshipsResponse.data.results?.slice(0, 3) || []);
@@ -524,8 +524,8 @@ function Home({
 
         {/* Job Cards */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((index) => (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((index) => (
               <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 animate-pulse`}>
                 <div className="h-4 bg-gray-300 rounded mb-2"></div>
                 <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
@@ -553,7 +553,8 @@ function Home({
                   {formatSalary(job.fixed_pay_min, job.fixed_pay_max)}
                 </p>
                 <p className={`${isDarkMode ? 'text-white/70' : 'text-black/70'} mb-4 text-sm`}>
-
+                  {job.job_description?.[0]?.substring(0, 100) || 'Join our team and make an impact with your skills.'}
+                  {job.job_description?.[0]?.length > 100 && '...'}
                 </p>
                 {job.skills_required && job.skills_required.length > 0 && (
                   <div className="mb-4">
@@ -593,7 +594,7 @@ function Home({
         
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3,4].map((index) => (
+            {[1, 2, 3].map((index) => (
               <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 animate-pulse`}>
                 <div className="h-4 bg-gray-300 rounded mb-2"></div>
                 <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
@@ -646,7 +647,7 @@ function Home({
                     </span>
                   </div>
                 )}
-                <button className="text-blue-500 hover:text-blue-600">View details →</button>
+                <Link to={`/internship/${internship.id}`} className="text-blue-500 hover:text-blue-600">View details →</Link>
               </div>
             )) : (
               <div className="col-span-3 text-center py-8">

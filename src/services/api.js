@@ -211,12 +211,12 @@ export const fetchFilteredJobs = (params) => {
 };
 
 // ================= Job Application Endpoints =================
-export const applyForJob = (jobId, data) => {
-  return api.post(`/jobs/${jobId}/apply/`, data);
+export const applyForJob = (data) => {
+  return api.post('/jobs/apply/', data);
 };
 
-export const applyForInternship = (internshipId, data) => {
-  return api.post(`/jobs/internship/${internshipId}/apply/`, data);
+export const applyForInternship = (data) => {
+  return api.post('/jobs/internship/apply/', data);
 };
 
 export default api;
