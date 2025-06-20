@@ -1,28 +1,59 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ChevronDown, User, LogOut, FileText, Briefcase, Settings } from 'lucide-react';
 import Login from "../pages/Login/Login";
-import { logout } from '../services/api'; // Import the logout function
+import { logout, fetchUserProfile } from '../services/api';
 
 function Navbar({ isDarkMode, toggleTheme }) {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const profileMenuRef = useRef(null);
 
-  // Check auth status on component mount
+  // Check auth status and fetch profile on component mount
   useEffect(() => {
     checkAuthStatus();
   }, [showLoginPopup]);
 
-  const checkAuthStatus = () => {
-    const token = localStorage.getItem('authToken') || 
-                  JSON.parse(sessionStorage.getItem('tempAuthTokens'))?.access;
-    setIsAuthenticated(!!token);
-    
-    // You might want to fetch user profile here to get the role
-    // For now, we'll just check localStorage
-    const role = localStorage.getItem('userRole');
-    setUserRole(role);
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('authToken') || 
+                    JSON.parse(sessionStorage.getItem('tempAuthTokens'))?.access;
+      
+      if (token) {
+        setIsAuthenticated(true);
+        // Fetch user profile
+        const response = await fetchUserProfile();
+        setUserProfile(response.data);
+      } else {
+        setIsAuthenticated(false);
+        setUserProfile(null);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setIsAuthenticated(false);
+      setUserProfile(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -41,7 +72,8 @@ function Navbar({ isDarkMode, toggleTheme }) {
       sessionStorage.removeItem('tempAuthTokens');
       
       setIsAuthenticated(false);
-      setUserRole(null);
+      setUserProfile(null);
+      setShowProfileMenu(false);
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
@@ -51,86 +83,178 @@ function Navbar({ isDarkMode, toggleTheme }) {
       localStorage.removeItem('userRole');
       sessionStorage.removeItem('tempAuthTokens');
       setIsAuthenticated(false);
-      setUserRole(null);
+      setUserProfile(null);
+      setShowProfileMenu(false);
       navigate('/');
     }
   };
 
-// Determine dashboard route based on user role
-const getDashboardRoute = (role) => {
-  switch(role) {
-    case 'Employer':
-      return '/dashboard/employer';
-    case 'Candidate':
-      return '/dashboard/student';
-    default:
-      return '/dashboard/student'; // fallback
-  }
-};
+  // Get profile picture or first letter
+  const getProfileDisplay = () => {
+    if (userProfile?.candidate_profile?.bio?.profile_picture) {
+      return (
+        <img
+          src={userProfile.candidate_profile.bio.profile_picture}
+          alt="Profile"
+          className="w-8 h-8 rounded-full object-cover border-2 border-white/20"
+        />
+      );
+    }
+    
+    const firstLetter = userProfile?.first_name?.charAt(0)?.toUpperCase() || 'U';
+    return (
+      <div className="w-8 h-8 rounded-full bg-[#18005F] text-white flex items-center justify-center text-sm font-semibold border-2 border-white/20">
+        {firstLetter}
+      </div>
+    );
+  };
 
-// Determine profile route based on user role
-const getProfileRoute = (role) => {
-  const normalizedRole = role?.toLowerCase();
-  return normalizedRole === 'employer' ? '/profile' : '/student/profile';
-};
+  // Determine dashboard route based on user role
+  const getDashboardRoute = () => {
+    if (userProfile?.role?.name === 'Employer') {
+      return '/dashboard/employer';
+    }
+    return '/dashboard/student';
+  };
+
+  // Determine profile route based on user role
+  const getProfileRoute = () => {
+    if (userProfile?.role?.name === 'Employer') {
+      return '/profile';
+    }
+    return '/student/profile';
+  };
+
+  // Check if user is employer
+  const isEmployer = userProfile?.role?.name === 'Employer';
+
   return (
     <>
       <nav className={`flex justify-between items-center p-4 md:p-6 mx-4 md:mx-6 my-2 md:my-4 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded-full transition-colors duration-300`}>
-        <Link to="/" className={`text-lg md:text-xl font-bold ${isDarkMode ? 'text-black' : 'text-white'}`}>
-          ADEPTINTERNS
+        {/* Logo Section */}
+        <Link to="/" className={`flex items-center space-x-3 text-lg md:text-xl font-bold ${isDarkMode ? 'text-black' : 'text-white'}`}>
+          {/* Website Logo */}
+          <div className="w-8 h-8 bg-[#18005F] rounded-full flex items-center justify-center">
+            <span className="text-white font-bold text-sm">A</span>
+          </div>
+          <span>ADEPTINTERNS</span>
         </Link>
         
-        <div className={`hidden md:flex space-x-8 ${isDarkMode ? 'text-black/80' : 'text-white/80'} text-sm`}>
-          <Link to="/jobs">Jobs</Link>
-          <Link to="/internships">Internships</Link>
-          <Link to="/courses">Courses</Link>
-          <a href="#blog">Our Blog</a>
-        </div>
+        {/* Navigation Links - Only show for non-employers */}
+        {!isEmployer && (
+          <div className={`hidden md:flex space-x-8 ${isDarkMode ? 'text-black/80' : 'text-white/80'} text-sm`}>
+            <Link to="/jobs" className="hover:text-[#18005F] transition-colors">Jobs</Link>
+            <Link to="/internships" className="hover:text-[#18005F] transition-colors">Internships</Link>
+            <Link to="/courses" className="hover:text-[#18005F] transition-colors">Courses</Link>
+            <a href="#blog" className="hover:text-[#18005F] transition-colors">Our Blog</a>
+          </div>
+        )}
         
         <div className="flex items-center gap-4">
+          {/* Theme Toggle */}
           <button 
             onClick={toggleTheme}
-            className={`p-2 rounded-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+            className={`p-2 rounded-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} transition-colors`}
           >
             {isDarkMode ? '☀️' : '🌙'}
           </button>
           
-          {/* Auth Buttons */}
+          {/* Auth Section */}
           <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <>
-<Link 
-  to={getDashboardRoute(userRole)}
-  className={`px-4 py-2 rounded-full text-sm ${
-    isDarkMode 
-      ? 'bg-black text-white' 
-      : 'bg-white text-black'
-  }`}
->
-  Dashboard
-</Link>
-
-<Link 
-  to={getProfileRoute(userRole)}
-  className={`px-4 py-2 rounded-full text-sm ${
-    isDarkMode 
-      ? 'bg-black text-white' 
-      : 'bg-white text-black'
-  }`}
->
-  Profile
-</Link>        <button 
-                  onClick={handleLogout}
-                  className={`px-4 py-2 rounded-full text-sm border ${
-                    isDarkMode 
-                      ? 'border-black/10 text-black/80' 
-                      : 'border-white/10 text-white/80'
-                  }`}
+            {loading ? (
+              <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
+            ) : isAuthenticated && userProfile ? (
+              /* Profile Menu */
+              <div className="relative" ref={profileMenuRef}>
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-full ${
+                    isDarkMode ? 'hover:bg-black/10' : 'hover:bg-white/10'
+                  } transition-colors`}
                 >
-                  Logout
+                  {getProfileDisplay()}
+                  <ChevronDown className={`w-4 h-4 ${isDarkMode ? 'text-black' : 'text-white'} transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
-              </>
+
+                {/* Dropdown Menu */}
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        {getProfileDisplay()}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {userProfile.first_name} {userProfile.last_name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {userProfile.email}
+                          </p>
+                          <span className="inline-block px-2 py-1 text-xs font-medium bg-[#18005F]/10 text-[#18005F] rounded-full mt-1">
+                            {userProfile.role?.name}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <Link
+                        to={getDashboardRoute()}
+                        onClick={() => setShowProfileMenu(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Briefcase className="w-4 h-4 mr-3 text-gray-400" />
+                        Dashboard
+                      </Link>
+
+                      <Link
+                        to={getProfileRoute()}
+                        onClick={() => setShowProfileMenu(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <User className="w-4 h-4 mr-3 text-gray-400" />
+                        Profile
+                      </Link>
+
+                      {/* Student-specific menu items */}
+                      {!isEmployer && (
+                        <>
+                          <Link
+                            to="/MyApplication"
+                            onClick={() => setShowProfileMenu(false)}
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <FileText className="w-4 h-4 mr-3 text-gray-400" />
+                            My Applications
+                          </Link>
+
+                          <Link
+                            to="/resume"
+                            onClick={() => setShowProfileMenu(false)}
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <FileText className="w-4 h-4 mr-3 text-gray-400" />
+                            Resume
+                          </Link>
+                        </>
+                      )}
+
+                      <div className="border-t border-gray-100 my-2"></div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
+              /* Login/Register Buttons */
               <>
                 <button 
                   onClick={() => setShowLoginPopup(true)}
@@ -138,7 +262,7 @@ const getProfileRoute = (role) => {
                     isDarkMode 
                       ? 'bg-black text-white' 
                       : 'bg-white text-black'
-                  }`}
+                  } transition-colors`}
                 >
                   Login
                 </button>
@@ -148,7 +272,7 @@ const getProfileRoute = (role) => {
                     isDarkMode 
                       ? 'bg-black text-white' 
                       : 'bg-white text-black'
-                  } font-medium`}
+                  } font-medium transition-colors`}
                 >
                   Register
                 </Link>
@@ -156,9 +280,9 @@ const getProfileRoute = (role) => {
                   to="/employers" 
                   className={`px-4 py-2 rounded-full text-sm border ${
                     isDarkMode 
-                      ? 'border-black/10 text-black/80' 
-                      : 'border-white/10 text-white/80'
-                  }`}
+                      ? 'border-black/10 text-black/80 hover:bg-black/5' 
+                      : 'border-white/10 text-white/80 hover:bg-white/5'
+                  } transition-colors`}
                 >
                   For Employers
                 </Link>
@@ -169,14 +293,12 @@ const getProfileRoute = (role) => {
       </nav>
 
       {/* Login Popup */}
-   {showLoginPopup && (
+      {showLoginPopup && (
         <Login 
           onClose={() => setShowLoginPopup(false)} 
           onLoginSuccess={() => {
-            // Update state immediately
-            setIsAuthenticated(true);
-            setUserRole(localStorage.getItem('userRole'));
             setShowLoginPopup(false);
+            checkAuthStatus(); // Refresh profile data
           }} 
         />
       )}
