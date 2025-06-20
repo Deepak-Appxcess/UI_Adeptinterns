@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Loader2, X, Mail, User, Phone, ArrowLeft, Check, Eye, EyeOff } from 'lucide-react';
+import { Lock, Loader2, X, Mail, User, Phone, ArrowLeft, Check, Eye, EyeOff, Shield, Star, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { registerUser, verifyOTP, resendOTP } from '../../services/api';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
 import { googleSignIn } from '../../services/api';
+
 const StudentRegister = () => {
   const [emailStatus, setEmailStatus] = useState({
     loading: false,
@@ -14,11 +15,14 @@ const StudentRegister = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
- const [googleLoading, setGoogleLoading] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  
   // Simplified form states
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     first_name: '',
     last_name: '',
     phone_number: '',
@@ -70,7 +74,13 @@ const StudentRegister = () => {
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Minimum 6 characters';
+      newErrors.password = 'Minimum 6 characters required';
+    }
+    
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     if (!formData.phone_number.trim()) {
@@ -92,6 +102,14 @@ const StudentRegister = () => {
       setErrors(prev => ({
         ...prev,
         [name]: ''
+      }));
+    }
+
+    // Clear confirm password error when password changes
+    if (name === 'password' && errors.confirmPassword) {
+      setErrors(prev => ({
+        ...prev,
+        confirmPassword: ''
       }));
     }
   };
@@ -121,7 +139,9 @@ const StudentRegister = () => {
     }
     
     try {
-      await registerUser(formData);
+      // Remove confirmPassword from the data sent to API
+      const { confirmPassword, ...registrationData } = formData;
+      await registerUser(registrationData);
       setShowOtpForm(true);
     } catch (error) {
       console.error('Registration error:', error);
@@ -233,472 +253,556 @@ const StudentRegister = () => {
     setOtp('');
     setOtpError('');
   };
+
   const handleGoogleSuccess = async (credentialResponse) => {
-  try {
-    setGoogleLoading(true);
-    setApiError('');
-    
-    const decoded = jwtDecode(credentialResponse.credential);
-    console.log('Google user info:', decoded);
-    
-    const { data } = await googleSignIn(credentialResponse.credential);
-    
-    localStorage.setItem('authToken', data.access);
-    localStorage.setItem('refreshToken', data.refresh);
-    
-    navigate('/dashboard/student');
-  } catch (error) {
-    console.error('Google Sign-In error:', error);
-    let errorMessage = 'Google sign-in failed. Please try again.';
-    
-    if (error.response) {
-      errorMessage = error.response.data?.error || 
-                   error.response.data?.detail || 
-                   errorMessage;
+    try {
+      setGoogleLoading(true);
+      setApiError('');
+      
+      const decoded = jwtDecode(credentialResponse.credential);
+      console.log('Google user info:', decoded);
+      
+      const { data } = await googleSignIn(credentialResponse.credential);
+      
+      localStorage.setItem('authToken', data.access);
+      localStorage.setItem('refreshToken', data.refresh);
+      
+      navigate('/dashboard/student');
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      let errorMessage = 'Google sign-in failed. Please try again.';
+      
+      if (error.response) {
+        errorMessage = error.response.data?.error || 
+                     error.response.data?.detail || 
+                     errorMessage;
+      }
+      
+      setApiError(errorMessage);
+    } finally {
+      setGoogleLoading(false);
     }
-    
-    setApiError(errorMessage);
-  } finally {
-    setGoogleLoading(false);
-  }
-};
+  };
 
-const handleGoogleError = () => {
-  setApiError('Google sign-in was cancelled');
-};
+  const handleGoogleError = () => {
+    setApiError('Google sign-in was cancelled');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <AnimatePresence mode="wait">
-          {showOtpForm ? (
-            <motion.div
-              key="otp-form"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-8"
-            >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleBackToRegister}
-                className="flex items-center text-gray-600 hover:text-blue-600 mb-6 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span className="text-sm font-medium">Back to registration</span>
-              </motion.button>
-              
-              <div className="text-center mb-8">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4"
-                >
-                  <Mail className="h-8 w-8 text-white" />
-                </motion.div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Your Email</h2>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  We've sent a verification code to<br />
-                  <span className="font-semibold text-blue-600">{formData.email}</span>
-                </p>
-              </div>
-              
-              <AnimatePresence>
-                {otpMessage && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl text-center"
-                  >
-                    ✓ {otpMessage}
-                  </motion.div>
-                )}
-                {otpError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl text-center"
-                  >
-                    {otpError}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+       <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%2318005F%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
 
-              <form onSubmit={handleOtpSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="otp" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Enter 6-digit verification code
-                  </label>
-                  <input
-                    type="text"
-                    id="otp"
-                    name="otp"
-                    value={otp}
-                    onChange={handleOtpChange}
-                    placeholder="000000"
-                    className={`w-full px-4 py-3 text-center text-lg font-mono tracking-widest border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all ${
-                      otpError ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
-                    }`}
-                    maxLength={6}
-                  />
-                </div>
-                
+
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-10 w-20 h-20 bg-[#18005F]/10 rounded-full blur-xl animate-pulse"></div>
+      <div className="absolute top-40 right-20 w-32 h-32 bg-[#18005F]/5 rounded-full blur-2xl animate-pulse delay-1000"></div>
+      <div className="absolute bottom-20 left-20 w-24 h-24 bg-[#18005F]/8 rounded-full blur-xl animate-pulse delay-500"></div>
+
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-md">
+          <AnimatePresence mode="wait">
+            {showOtpForm ? (
+              <motion.div
+                key="otp-form"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 relative"
+              >
+                {/* Decorative Elements */}
+                <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-[#18005F]/20 to-transparent rounded-full blur-xl"></div>
+                <div className="absolute -bottom-2 -left-2 w-12 h-12 bg-gradient-to-tr from-[#18005F]/15 to-transparent rounded-full blur-lg"></div>
+
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={isSubmitting || otp.length !== 6}
-                  className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all ${
-                    isSubmitting || otp.length !== 6 ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'
-                  }`}
+                  whileHover={{ scale: 1.05, x: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleBackToRegister}
+                  className="flex items-center text-gray-600 hover:text-[#18005F] mb-8 transition-all duration-300 group"
                 >
-                  {isSubmitting ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      Verifying...
-                    </div>
-                  ) : 'Verify Email'}
+                  <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                  <span className="text-sm font-semibold">Back to registration</span>
                 </motion.button>
                 
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={resendDisabled}
-                    className={`text-sm font-medium transition-colors ${
-                      resendDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-700'
+                <div className="text-center mb-8">
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="w-20 h-20 bg-gradient-to-br from-[#18005F] to-[#18005F]/80 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"
+                  >
+                    <Shield className="h-10 w-10 text-white" />
+                  </motion.div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-3">Verify Your Email</h2>
+                  <p className="text-gray-600 leading-relaxed">
+                    We've sent a verification code to<br />
+                    <span className="font-bold text-[#18005F]">{formData.email}</span>
+                  </p>
+                </div>
+                
+                <AnimatePresence>
+                  {otpMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl text-center shadow-sm"
+                    >
+                      <div className="flex items-center justify-center">
+                        <Check className="w-5 h-5 mr-2" />
+                        {otpMessage}
+                      </div>
+                    </motion.div>
+                  )}
+                  {otpError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-center shadow-sm"
+                    >
+                      <div className="flex items-center justify-center">
+                        <X className="w-5 h-5 mr-2" />
+                        {otpError}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <form onSubmit={handleOtpSubmit} className="space-y-6">
+                  <div>
+                    <label htmlFor="otp" className="block text-sm font-bold text-gray-700 mb-3">
+                      Enter 6-digit verification code
+                    </label>
+                    <input
+                      type="text"
+                      id="otp"
+                      name="otp"
+                      value={otp}
+                      onChange={handleOtpChange}
+                      placeholder="000000"
+                      className={`w-full px-6 py-4 text-center text-2xl font-mono tracking-widest border-2 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 transition-all shadow-sm ${
+                        otpError ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-[#18005F] bg-gray-50/50'
+                      }`}
+                      maxLength={6}
+                    />
+                  </div>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isSubmitting || otp.length !== 6}
+                    className={`w-full bg-gradient-to-r from-[#18005F] to-[#18005F]/90 text-white py-4 px-6 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 ${
+                      isSubmitting || otp.length !== 6 ? 'opacity-50 cursor-not-allowed' : 'hover:from-[#18005F]/90 hover:to-[#18005F]'
                     }`}
                   >
-                    {resendDisabled ? `Resend code in ${resendTimer}s` : 'Resend verification code'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="register-form"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 50 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-8"
-            >
-              <div className="text-center mb-8">
-                <motion.h1
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2"
-                >
-                  ADEPTINTERNS
-                </motion.h1>
-                <motion.h2
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-xl font-semibold text-gray-900 mb-1"
-                >
-                  Start Your Career Journey
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-gray-600 text-sm"
-                >
-                  Discover amazing internship and job opportunities
-                </motion.p>
-                <motion.div
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ delay: 0.8 }}
-  className="mt-6"
->
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin mr-3" />
+                        Verifying...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <Shield className="h-5 w-5 mr-2" />
+                        Verify Email
+                      </div>
+                    )}
+                  </motion.button>
+                  
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={resendDisabled}
+                      className={`font-semibold transition-all duration-300 ${
+                        resendDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-[#18005F] hover:text-[#18005F]/80 hover:underline'
+                      }`}
+                    >
+                      {resendDisabled ? `Resend code in ${resendTimer}s` : 'Resend verification code'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="register-form"
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 50 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 relative"
+              >
+                {/* Decorative Elements */}
+                <div className="absolute -top-3 -right-3 w-20 h-20 bg-gradient-to-br from-[#18005F]/20 to-transparent rounded-full blur-xl"></div>
+                <div className="absolute -bottom-3 -left-3 w-16 h-16 bg-gradient-to-tr from-[#18005F]/15 to-transparent rounded-full blur-lg"></div>
 
-
-  <div className="mt-6">
-    <GoogleLogin
-      onSuccess={handleGoogleSuccess}
-      onError={handleGoogleError}
-      useOneTap
-      shape="pill"
-      size="large"
-      text="signin_with"
-      theme="outline"
-      width="100%"
-    />
-    {googleLoading && (
-      <div className="mt-4 text-center">
-        <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600" />
-      </div>
-    )}
-  </div>
-    <div className="relative">
-    <div className="absolute inset-0 flex items-center">
-      <div className="w-full border-t border-gray-300" />
-    </div>
-    <div className="relative flex justify-center text-sm">
-      <span className="px-2 bg-white text-gray-500">Or continue with</span>
-    </div>
-  </div>
-</motion.div>
-              </div>
-              
-              <AnimatePresence>
-                {apiError && (
+                <div className="text-center mb-8">
                   <motion.div
-                    initial={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, y: -30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm"
+                    transition={{ duration: 0.6 }}
+                    className="flex items-center justify-center mb-4"
                   >
-                    {apiError}
+                    <div className="w-12 h-12 bg-[#18005F] rounded-2xl flex items-center justify-center mr-3 shadow-lg">
+                      <Star className="h-7 w-7 text-white" />
+                    </div>
+                    <h1 className="text-4xl font-black bg-gradient-to-r from-[#18005F] to-[#18005F]/80 bg-clip-text text-transparent">
+                      ADEPTINTERNS
+                    </h1>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                  <motion.h2
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, duration: 0.6 }}
+                    className="text-2xl font-bold text-gray-900 mb-2"
+                  >
+                    Start Your Career Journey
+                  </motion.h2>
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.6 }}
+                    className="text-gray-600 font-medium"
+                  >
+                    Discover amazing internship and job opportunities
+                  </motion.p>
 
-              <form onSubmit={handleRegisterSubmit} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="mt-8"
                   >
-                    <label htmlFor="first_name" className="block text-sm font-semibold text-gray-700 mb-2">
-                      First Name
+                    <div className="mb-6">
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        useOneTap
+                        shape="pill"
+                        size="large"
+                        text="signup_with"
+                        theme="outline"
+                        width="100%"
+                      />
+                      {googleLoading && (
+                        <div className="mt-4 text-center">
+                          <Loader2 className="h-5 w-5 animate-spin mx-auto text-[#18005F]" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-white text-gray-500 font-semibold">Or continue with email</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+                
+                <AnimatePresence>
+                  {apiError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl shadow-sm"
+                    >
+                      <div className="flex items-center">
+                        <X className="w-5 h-5 mr-2 flex-shrink-0" />
+                        <span className="text-sm font-medium">{apiError}</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <form onSubmit={handleRegisterSubmit} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.5 }}
+                    >
+                      <label htmlFor="first_name" className="block text-sm font-bold text-gray-700 mb-2">
+                        First Name
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          id="first_name"
+                          name="first_name"
+                          value={formData.first_name}
+                          onChange={handleChange}
+                          placeholder="Alex"
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 transition-all font-medium shadow-sm ${
+                            errors.first_name ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-[#18005F] bg-gray-50/50'
+                          }`}
+                        />
+                      </div>
+                      {errors.first_name && (
+                        <p className="mt-2 text-xs text-red-600 font-medium">{errors.first_name}</p>
+                      )}
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.45, duration: 0.5 }}
+                    >
+                      <label htmlFor="last_name" className="block text-sm font-bold text-gray-700 mb-2">
+                        Last Name
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          id="last_name"
+                          name="last_name"
+                          value={formData.last_name}
+                          onChange={handleChange}
+                          placeholder="Smith"
+                          className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 transition-all font-medium shadow-sm ${
+                            errors.last_name ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-[#18005F] bg-gray-50/50'
+                          }`}
+                        />
+                      </div>
+                      {errors.last_name && (
+                        <p className="mt-2 text-xs text-red-600 font-medium">{errors.last_name}</p>
+                      )}
+                    </motion.div>
+                  </div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                  >
+                    <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
+                      Email Address
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className="h-4 w-4 text-gray-400" />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="text"
-                        id="first_name"
-                        name="first_name"
-                        value={formData.first_name}
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
                         onChange={handleChange}
-                        placeholder="Alex"
-                        className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all text-sm ${
-                          errors.first_name ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                        placeholder="alex@university.edu"
+                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 transition-all font-medium shadow-sm ${
+                          errors.email ? 'border-red-300 bg-red-50' : 
+                          emailStatus.exists === true ? 'border-red-300 bg-red-50' : 
+                          emailStatus.exists === false ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 focus:border-[#18005F] bg-gray-50/50'
                         }`}
                       />
+                      {emailStatus.loading && (
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                          <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                        </div>
+                      )}
+                      {!emailStatus.loading && emailStatus.exists !== null && (
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                          {emailStatus.exists ? (
+                            <X className="h-5 w-5 text-red-500" />
+                          ) : (
+                            <Check className="h-5 w-5 text-emerald-500" />
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {errors.first_name && (
-                      <p className="mt-1 text-xs text-red-600">{errors.first_name}</p>
+                    {errors.email && (
+                      <p className="mt-2 text-xs text-red-600 font-medium">{errors.email}</p>
+                    )}
+                    {emailStatus.message && !errors.email && (
+                      <p className={`mt-2 text-xs font-medium ${
+                        emailStatus.exists ? 'text-red-600' : 'text-emerald-600'
+                      }`}>
+                        {emailStatus.message}
+                      </p>
                     )}
                   </motion.div>
                   
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 }}
+                    transition={{ delay: 0.55, duration: 0.5 }}
                   >
-                    <label htmlFor="last_name" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Last Name
+                    <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2">
+                      Password
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className="h-4 w-4 text-gray-400" />
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        type="text"
-                        id="last_name"
-                        name="last_name"
-                        value={formData.last_name}
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        name="password"
+                        value={formData.password}
                         onChange={handleChange}
-                        placeholder="Smith"
-                        className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all text-sm ${
-                          errors.last_name ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
+                        placeholder="Minimum 6 characters"
+                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 transition-all font-medium shadow-sm ${
+                          errors.password ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-[#18005F] bg-gray-50/50'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-100 rounded-r-2xl transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="mt-2 text-xs text-red-600 font-medium">{errors.password}</p>
+                    )}
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                  >
+                    <label htmlFor="confirmPassword" className="block text-sm font-bold text-gray-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        placeholder="Confirm your password"
+                        className={`w-full pl-12 pr-14 py-4 border-2 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 transition-all font-medium shadow-sm ${
+                          errors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-[#18005F] bg-gray-50/50'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-100 rounded-r-2xl transition-colors"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="mt-2 text-xs text-red-600 font-medium">{errors.confirmPassword}</p>
+                    )}
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.65, duration: 0.5 }}
+                  >
+                    <label htmlFor="phone_number" className="block text-sm font-bold text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="tel"
+                        id="phone_number"
+                        name="phone_number"
+                        value={formData.phone_number}
+                        onChange={handleChange}
+                        placeholder="+1 (555) 123-4567"
+                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 transition-all font-medium shadow-sm ${
+                          errors.phone_number ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-[#18005F] bg-gray-50/50'
                         }`}
                       />
                     </div>
-                    {errors.last_name && (
-                      <p className="mt-1 text-xs text-red-600">{errors.last_name}</p>
+                    {errors.phone_number && (
+                      <p className="mt-2 text-xs text-red-600 font-medium">{errors.phone_number}</p>
                     )}
                   </motion.div>
-                </div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                    </div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7, duration: 0.5 }}
+                    className="flex items-start space-x-3 p-4 bg-gray-50/50 rounded-2xl border border-gray-200"
+                  >
                     <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="alex@university.edu"
-                      className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all text-sm ${
-                        errors.email ? 'border-red-300 bg-red-50' : 
-                        emailStatus.exists === true ? 'border-red-300 bg-red-50' : 
-                        emailStatus.exists === false ? 'border-green-300 bg-green-50' : 'border-gray-200 focus:border-blue-500'
-                      }`}
+                      id="terms"
+                      name="terms"
+                      type="checkbox"
+                      required
+                      className="mt-1 h-5 w-5 text-[#18005F] focus:ring-[#18005F] border-gray-300 rounded"
                     />
-                    {emailStatus.loading && (
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    <label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed font-medium">
+                      I agree to ADEPTINTERNS' <a href="/terms" className="text-[#18005F] hover:text-[#18005F]/80 font-bold underline">Terms of Service</a> and <a href="/privacy" className="text-[#18005F] hover:text-[#18005F]/80 font-bold underline">Privacy Policy</a>
+                    </label>
+                  </motion.div>
+
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.75, duration: 0.5 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`w-full bg-gradient-to-r from-[#18005F] to-[#18005F]/90 text-white py-4 px-6 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 ${
+                      isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-[#18005F]/90 hover:to-[#18005F]'
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin mr-3" />
+                        Creating Account...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 mr-2" />
+                        Create Student Account
                       </div>
                     )}
-                    {!emailStatus.loading && emailStatus.exists !== null && (
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        {emailStatus.exists ? (
-                          <X className="h-4 w-4 text-red-500" />
-                        ) : (
-                          <Check className="h-4 w-4 text-green-500" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {errors.email && (
-                    <p className="mt-1 text-xs text-red-600">{errors.email}</p>
-                  )}
-                  {emailStatus.message && !errors.email && (
-                    <p className={`mt-1 text-xs ${
-                      emailStatus.exists ? 'text-red-600' : 'text-green-600'
-                    }`}>
-                      {emailStatus.message}
+                  </motion.button>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8, duration: 0.5 }}
+                    className="text-center"
+                  >
+                    <p className="text-gray-600 font-medium">
+                      Already have an account?{' '}
+                      <a href="/login" className="text-[#18005F] hover:text-[#18005F]/80 font-bold underline">
+                        Sign in
+                      </a>
                     </p>
-                  )}
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45 }}
-                >
-                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      placeholder="Minimum 6 characters"
-                      className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all text-sm ${
-                        errors.password ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                      )}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="mt-1 text-xs text-red-600">{errors.password}</p>
-                  )}
-                </motion.div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <label htmlFor="phone_number" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      type="tel"
-                      id="phone_number"
-                      name="phone_number"
-                      value={formData.phone_number}
-                      onChange={handleChange}
-                      placeholder="+1 (555) 123-4567"
-                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all text-sm ${
-                        errors.phone_number ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-blue-500'
-                      }`}
-                    />
-                  </div>
-                  {errors.phone_number && (
-                    <p className="mt-1 text-xs text-red-600">{errors.phone_number}</p>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.55 }}
-                  className="flex items-start space-x-3"
-                >
-                  <input
-                    id="terms"
-                    name="terms"
-                    type="checkbox"
-                    required
-                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="terms" className="text-xs text-gray-600 leading-relaxed">
-                    I agree to ADEPTINTERNS' <a href="/terms" className="text-blue-600 hover:text-blue-700 font-medium">Terms of Service</a> and <a href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium">Privacy Policy</a>
-                  </label>
-                </motion.div>
-
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      Creating Account...
-                    </div>
-                  ) : 'Create Student Account'}
-                </motion.button>
-
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
-                  className="text-center"
-                >
-                  <p className="text-sm text-gray-600">
-                    Already have an account?{' '}
-                    <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
-                      Sign in
-                    </a>
-                  </p>
-                </motion.div>
-               
-
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  </motion.div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
