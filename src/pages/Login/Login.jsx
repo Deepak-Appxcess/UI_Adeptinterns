@@ -4,7 +4,9 @@ import { Mail, Lock, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 import { login } from '../../services/api';
-
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
+import { googleSignIn } from '../../services/api'; // Import the Google sign-in function
 const LoginPopup = ({ onClose }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,7 +14,11 @@ const LoginPopup = ({ onClose }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+    const [apiError, setApiError] = useState('');
+
+  
   const navigate = useNavigate();
+   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -41,10 +47,12 @@ const LoginPopup = ({ onClose }) => {
       // Store both access and refresh tokens
       localStorage.setItem('authToken', data.access);
       localStorage.setItem('refreshToken', data.refresh);
-      
+       localStorage.setItem('userRole', role);
       // Dispatch storage event to notify other components
       window.dispatchEvent(new Event('storage'));
       
+   
+      // Close the popup
       onClose?.();
       
       // Navigate based on user type
@@ -71,7 +79,39 @@ const LoginPopup = ({ onClose }) => {
       onClose?.();
     }
   };
+  const handleGoogleSuccess = async (credentialResponse) => {
+  try {
+    setGoogleLoading(true);
+    setApiError('');
+    
+    const decoded = jwtDecode(credentialResponse.credential);
+    console.log('Google user info:', decoded);
+    
+    const { data } = await googleSignIn(credentialResponse.credential);
+    
+    localStorage.setItem('authToken', data.access);
+    localStorage.setItem('refreshToken', data.refresh);
+    
+    navigate('/dashboard/student');
+  } catch (error) {
+    console.error('Google Sign-In error:', error);
+    let errorMessage = 'Google sign-in failed. Please try again.';
+    
+    if (error.response) {
+      errorMessage = error.response.data?.error || 
+                   error.response.data?.detail || 
+                   errorMessage;
+    }
+    
+    setApiError(errorMessage);
+  } finally {
+    setGoogleLoading(false);
+  }
+};
 
+const handleGoogleError = () => {
+  setApiError('Google sign-in was cancelled');
+};
   return (
     <AnimatePresence>
       <motion.div 
@@ -134,19 +174,41 @@ const LoginPopup = ({ onClose }) => {
             </motion.button>
           </div>
 
-          <motion.button 
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="w-full mb-4 py-2.5 px-4 border border-gray-200 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-50 transition-all"
+        
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="mt-6"
           >
-            <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" 
-              alt="Google logo" 
-              className="h-5 w-5"
-            />
-            <span className="text-sm font-medium">Continue with Google</span>
-          </motion.button>
-
+          
+          
+            <div className="mt-6">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap
+                shape="pill"
+                size="large"
+                text="signin_with"
+                theme="outline"
+                width="100%"
+              />
+              {googleLoading && (
+                <div className="mt-4 text-center">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600" />
+                </div>
+              )}
+            </div>
+              <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+          </motion.div>
           <div className="flex items-center mb-6">
             <div className="flex-1 border-t border-gray-200"></div>
             <span className="mx-3 text-gray-400 text-xs">OR</span>

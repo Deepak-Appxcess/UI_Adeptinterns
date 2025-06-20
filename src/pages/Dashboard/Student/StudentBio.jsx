@@ -14,7 +14,9 @@ const StudentBio = () => {
     stream: '',
     start_year: '',
     end_year: '',
-    profile_picture: null
+    profile_picture: null,
+    current_company: '',
+    current_designation: ''
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,6 +54,12 @@ const StudentBio = () => {
     data.append('end_year', formData.end_year);
     if (formData.profile_picture) {
       data.append('profile_picture', formData.profile_picture);
+    }
+    
+    // Only append these fields if candidate is a working professional
+    if (formData.candidate_type === 'Working professional') {
+      data.append('current_company', formData.current_company);
+      data.append('current_designation', formData.current_designation);
     }
 
     try {
@@ -133,12 +141,10 @@ const StudentBio = () => {
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               required
             >
-              <option value="">Select Type</option>
-              <option value="College student">College student</option>
+              
               <option value="Fresher">Fresher</option>
-              <option value="Working professional">Working professional</option>
-              <option value="School student">School student</option>
-              <option value="Woman returning to work">Woman returning to work</option>
+              <option value="Experienced">Working professional</option>
+              
             </select>
             {errors.candidate_type && <p className="mt-1 text-sm text-red-600">{errors.candidate_type}</p>}
           </div>
@@ -221,6 +227,38 @@ const StudentBio = () => {
             />
             {errors.end_year && <p className="mt-1 text-sm text-red-600">{errors.end_year}</p>}
           </div>
+
+          {/* Current Company (only for Working professionals) */}
+          {formData.candidate_type === 'Working professional' && (
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Current Company*</label>
+              <input
+                type="text"
+                name="current_company"
+                value={formData.current_company}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required={formData.candidate_type === 'Working professional'}
+              />
+              {errors.current_company && <p className="mt-1 text-sm text-red-600">{errors.current_company}</p>}
+            </div>
+          )}
+
+          {/* Current Designation (only for Working professionals) */}
+          {formData.candidate_type === 'Experienced' && (
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Current Designation*</label>
+              <input
+                type="text"
+                name="current_designation"
+                value={formData.current_designation}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required={formData.candidate_type === 'Working professional'}
+              />
+              {errors.current_designation && <p className="mt-1 text-sm text-red-600">{errors.current_designation}</p>}
+            </div>
+          )}
 
           {/* Profile Picture */}
           <div className="md:col-span-2">

@@ -342,7 +342,7 @@ const handleApplication = (id, type) => {
                            <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleApplication(item.id)}
+                              onClick={() => handleApplication(item.id,type)}
                               className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                               title="Edit"
                             >

@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import {
   getCandidateResume,
   createOrUpdateCandidateResume,
-} from '../../services/api';
+} from '../../../../services/api';
 import ResumeParser from './ResumeParser';
 
 const ResumePage = () => {
@@ -24,46 +24,52 @@ const ResumePage = () => {
   });
   const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
-    const checkResumeExists = async () => {
-      try {
-        setIsLoading(true);
-        const response = await getCandidateResume();
-        
-        // Check if the response indicates no resume exists
-        if (response.data && response.data.detail === "Resume not found.") {
-          setResumeData(null);
-          setShowImportPopup(true);
-        } else if (response.data) {
-          // Resume exists, set the data
-          setResumeData({
-            ...response.data,
-            education: Array.isArray(response.data.education) ? response.data.education : [],
-            work_experiences: Array.isArray(response.data.work_experiences) ? response.data.work_experiences : [],
-            skills: Array.isArray(response.data.skills) ? response.data.skills : [],
-            // normalize other arrays similarly
-          });
-          setFormData({
-            ...response.data,
-            education: Array.isArray(response.data.education) ? response.data.education : [],
-            work_experiences: Array.isArray(response.data.work_experiences) ? response.data.work_experiences : [],
-            skills: Array.isArray(response.data.skills) ? response.data.skills : [],
-            // normalize other arrays similarly
-          });
-          setEditMode(false);
-          setShowImportPopup(false);
-        }
-      } catch (error) {
-        console.error('Error fetching resume:', error);
-        toast.error('Failed to load resume data');
+useEffect(() => {
+  const checkResumeExists = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getCandidateResume();
+      
+      // Check if we're coming from a job application
+      const locationState = location.state;
+      const fromJobApplication = locationState?.from;
+      
+      if (response.data && response.data.detail === "Resume not found.") {
+        setResumeData(null);
         setShowImportPopup(true);
-      } finally {
-        setIsLoading(false);
+      } else if (response.data) {
+        // Resume exists, set the data
+        setResumeData({
+          ...response.data,
+          education: Array.isArray(response.data.education) ? response.data.education : [],
+          work_experiences: Array.isArray(response.data.work_experiences) ? response.data.work_experiences : [],
+          skills: Array.isArray(response.data.skills) ? response.data.skills : [],
+        });
+        setFormData({
+          ...response.data,
+          education: Array.isArray(response.data.education) ? response.data.education : [],
+          work_experiences: Array.isArray(response.data.work_experiences) ? response.data.work_experiences : [],
+          skills: Array.isArray(response.data.skills) ? response.data.skills : [],
+        });
+        setEditMode(false);
+        setShowImportPopup(false);
+        
+        // If we came here from a job application and just created the resume, redirect back
+        if (fromJobApplication && locationState?.newlyCreated) {
+          navigate(fromJobApplication);
+        }
       }
-    };
+    } catch (error) {
+      console.error('Error fetching resume:', error);
+      toast.error('Failed to load resume data');
+      setShowImportPopup(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    checkResumeExists();
-  }, []);
+  checkResumeExists();
+}, [location.state]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -98,21 +104,33 @@ const ResumePage = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true);
-      await createOrUpdateCandidateResume(formData);
-      const response = await getCandidateResume();
-      setResumeData(response.data);
-      setEditMode(false);
-      toast.success('Resume saved successfully');
-    } catch (error) {
-      toast.error('Failed to save resume');
-    } finally {
-      setIsLoading(false);
+  
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    setIsLoading(true);
+    await createOrUpdateCandidateResume(formData);
+    const response = await getCandidateResume();
+    setResumeData(response.data);
+    setEditMode(false);
+    toast.success('Resume saved successfully');
+    
+    // Check if we came from a job application
+    const fromJobApplication = location.state?.from;
+    if (fromJobApplication) {
+      // Redirect back to the job with state indicating we just created the resume
+      navigate(fromJobApplication, { 
+        state: { newlyCreated: true },
+        replace: true
+      });
     }
-  };
+  } catch (error) {
+    toast.error('Failed to save resume');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   if (isLoading) {
     return <div className="container mx-auto py-8">Loading resume data...</div>;

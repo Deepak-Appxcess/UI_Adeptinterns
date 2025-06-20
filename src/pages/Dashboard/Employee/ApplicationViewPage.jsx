@@ -16,7 +16,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip
+  Chip,
+  Avatar
 } from '@mui/material';
 import { Download, Visibility } from '@mui/icons-material';
 
@@ -53,10 +54,10 @@ const ApplicationViewPage = () => {
         }
 
         const response = await fetchApplications(params);
-        setApplications(response.data);
+        setApplications(response.data?.results || []);
       } catch (err) {
         console.error('Failed to fetch applications:', err);
-        setError(err.message || 'Failed to fetch applications');
+        setError(err.response?.data?.message || err.message || 'Failed to fetch applications');
       } finally {
         setLoading(false);
       }
@@ -81,13 +82,24 @@ const ApplicationViewPage = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    if (!status) return 'default';
+    
+    switch (status.toUpperCase()) {
       case 'APPLIED': return 'default';
       case 'UNDER_REVIEW': return 'info';
       case 'SHORTLISTED': return 'primary';
       case 'REJECTED': return 'error';
       case 'ACCEPTED': return 'success';
       default: return 'default';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (e) {
+      return 'Invalid Date';
     }
   };
 
@@ -158,6 +170,7 @@ const ApplicationViewPage = () => {
                 <TableCell>Candidate</TableCell>
                 <TableCell>Position</TableCell>
                 <TableCell>Type</TableCell>
+                <TableCell>Experience</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Applied On</TableCell>
                 <TableCell>Actions</TableCell>
@@ -167,23 +180,46 @@ const ApplicationViewPage = () => {
               {applications.map((app) => (
                 <TableRow key={app.id}>
                   <TableCell>
-                    {app.candidate_profile?.first_name} {app.candidate_profile?.last_name}
+                    <Box display="flex" alignItems="center">
+                      {app.candidate_profile?.profile_picture_url ? (
+                        <Avatar 
+                          src={app.candidate_profile.profile_picture_url} 
+                          alt={`${app.candidate_profile.first_name} ${app.candidate_profile.last_name}`}
+                          sx={{ mr: 2 }}
+                        />
+                      ) : (
+                        <Avatar sx={{ mr: 2 }}>
+                          {app.candidate_profile?.first_name?.charAt(0) || 'U'}
+                        </Avatar>
+                      )}
+                      <Box>
+                        <Typography variant="body1">
+                          {app.candidate_profile?.first_name || 'N/A'} {app.candidate_profile?.last_name || ''}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {app.candidate_email || 'Email not available'}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </TableCell>
                   <TableCell>
-                    {app.job_title || app.internship_title}
+                    {app.job_title || app.internship_title || 'N/A'}
                   </TableCell>
                   <TableCell>
-                    {app.job_id ? 'Job' : 'Internship'}
+                    {app.job_title ? 'Job' : app.internship_title ? 'Internship' : 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    {app.work_experience ? `${app.work_experience} years` : 'Fresher'}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={app.status}
+                      label={app.status || 'UNKNOWN'}
                       color={getStatusColor(app.status)}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
-                    {new Date(app.created_at).toLocaleDateString()}
+                    {formatDate(app.applied_at || app.created_at)}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -195,7 +231,7 @@ const ApplicationViewPage = () => {
                     >
                       View
                     </Button>
-                    {app.resume?.url && (
+                    {app.resume?.url ? (
                       <Button
                         variant="outlined"
                         size="small"
@@ -203,6 +239,15 @@ const ApplicationViewPage = () => {
                         onClick={() => window.open(app.resume.url, '_blank')}
                       >
                         Resume
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        disabled
+                        startIcon={<Download />}
+                      >
+                        No Resume
                       </Button>
                     )}
                   </TableCell>

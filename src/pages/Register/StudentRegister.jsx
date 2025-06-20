@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Loader2, X, Mail, User, Phone, ArrowLeft, Check, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { registerUser, verifyOTP, resendOTP } from '../../services/api';
-
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
+import { googleSignIn } from '../../services/api';
 const StudentRegister = () => {
   const [emailStatus, setEmailStatus] = useState({
     loading: false,
@@ -12,7 +14,7 @@ const StudentRegister = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-
+ const [googleLoading, setGoogleLoading] = useState(false);
   // Simplified form states
   const [formData, setFormData] = useState({
     email: '',
@@ -231,7 +233,39 @@ const StudentRegister = () => {
     setOtp('');
     setOtpError('');
   };
+  const handleGoogleSuccess = async (credentialResponse) => {
+  try {
+    setGoogleLoading(true);
+    setApiError('');
+    
+    const decoded = jwtDecode(credentialResponse.credential);
+    console.log('Google user info:', decoded);
+    
+    const { data } = await googleSignIn(credentialResponse.credential);
+    
+    localStorage.setItem('authToken', data.access);
+    localStorage.setItem('refreshToken', data.refresh);
+    
+    navigate('/dashboard/student');
+  } catch (error) {
+    console.error('Google Sign-In error:', error);
+    let errorMessage = 'Google sign-in failed. Please try again.';
+    
+    if (error.response) {
+      errorMessage = error.response.data?.error || 
+                   error.response.data?.detail || 
+                   errorMessage;
+    }
+    
+    setApiError(errorMessage);
+  } finally {
+    setGoogleLoading(false);
+  }
+};
 
+const handleGoogleError = () => {
+  setApiError('Google sign-in was cancelled');
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -377,6 +411,40 @@ const StudentRegister = () => {
                 >
                   Discover amazing internship and job opportunities
                 </motion.p>
+                <motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: 0.8 }}
+  className="mt-6"
+>
+
+
+  <div className="mt-6">
+    <GoogleLogin
+      onSuccess={handleGoogleSuccess}
+      onError={handleGoogleError}
+      useOneTap
+      shape="pill"
+      size="large"
+      text="signin_with"
+      theme="outline"
+      width="100%"
+    />
+    {googleLoading && (
+      <div className="mt-4 text-center">
+        <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600" />
+      </div>
+    )}
+  </div>
+    <div className="relative">
+    <div className="absolute inset-0 flex items-center">
+      <div className="w-full border-t border-gray-300" />
+    </div>
+    <div className="relative flex justify-center text-sm">
+      <span className="px-2 bg-white text-gray-500">Or continue with</span>
+    </div>
+  </div>
+</motion.div>
               </div>
               
               <AnimatePresence>
@@ -625,6 +693,8 @@ const StudentRegister = () => {
                     </a>
                   </p>
                 </motion.div>
+               
+
               </form>
             </motion.div>
           )}

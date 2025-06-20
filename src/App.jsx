@@ -9,9 +9,9 @@ import Internships from './pages/Internships'
 import Courses from './pages/Courses/Courses'
 
 import EmployeeRegister from './pages/Register/EmployeeRegister'
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
 import StudentRegister from './pages/Register/StudentRegister'
-
-
 import Login from './pages/Login/Login'
 import CourseDetails from './pages/Courses/CourseDetails'
 import EmployeeDashboard from './pages/Dashboard/Employee/Dashboard'
@@ -23,8 +23,7 @@ import PostJob from './pages/Dashboard/Employee/PostJob'
 import StudentProfile from './pages/Dashboard/Student/StudentProfile'
 import ApplicationViewPage from './pages/Dashboard/Employee/ApplicationViewPage'
 
-import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
-import UpdateInternship from './pages/Dashboard/Employee/InternshipUpdate'
+
 import Employeeprofile from './pages/Dashboard/Employee/Profile'
 import JobDetails from './pages/JobDetails'
 import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
@@ -33,7 +32,8 @@ import { fetchCourses } from './services/api'; // Adjust path if needed
 import api from './services/api';
 import ApplicationDetailPage from './pages/Dashboard/Employee/ApplicationDetailPage'
 import InternshipDetails from './pages/InternshipDetails'
-import ResumePage from './pages/Resume/ResumePage'
+import ResumePage from './pages/Dashboard/Student/Resume/ResumePage'
+import MyApplications from './pages/Dashboard/Student/MyApplications'
 
 
 // Protected Route Component
@@ -213,6 +213,7 @@ function App() {
   })
 
   return (
+     <GoogleOAuthProvider clientId="380706120194-tlm6ibu4b4jun9tssfgpcgib1mkflqir.apps.googleusercontent.com">
     <Router>
       <div className={`min-h-screen ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-gray-100'} transition-colors duration-300`}>
         <div className={`${isDarkMode ? 'bg-black border-white/10' : 'bg-white border-black/10'} rounded-[48px] min-h-[calc(100vh-2rem)] overflow-hidden border transition-colors duration-300`}>
@@ -255,7 +256,6 @@ function App() {
             <Route path="/internships" element={<Internships />} />
         <Route path="/internship/:id" element={<InternshipDetails/>} />
             <Route path="/courses" element={<Courses />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route  
               path="/dashboard/employer" 
               element={
@@ -274,9 +274,14 @@ function App() {
             />
             <Route path="/courses/:id" element={<CourseDetails />} />
             <Route path="/employers" element={<EmployeeRegister/>} />
-            <Route path="/student" element={<StudentRegister/>} />
+            {/* <Route path="/student" element={<StudentRegister/>} /> */}
+            {/* <Route path="/login" element={<Login onLogin={handleLogin} />} /> */}
+
+<Route path="/student" element={<StudentRegister />} />
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/profile/candidate/bio" element={<StudentBio/>} />
             <Route path="/resume" element={<ResumePage/>} />
+            <Route path="/MyApplication" element={<MyApplications/>} />
             
               <Route path="/student/preferences" element={<StudentPreferences />} />
             <Route path="/profile" element={
@@ -314,6 +319,7 @@ function App() {
         </div>
       </div>
     </Router>
+    </GoogleOAuthProvider>
   );
 }
 

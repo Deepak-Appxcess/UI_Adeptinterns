@@ -56,19 +56,23 @@ function Navbar({ isDarkMode, toggleTheme }) {
     }
   };
 
-  // Determine dashboard route based on user role
-  const getDashboardRoute = () => {
-    if (userRole === 'Employer') return '/dashboard/employer';
-    if (userRole === 'Candidate') return '/dashboard/student';
-    return '/dashboard/student'; // fallback
-  };
-  // Determine dashboard route based on user role
-const getProfileRoute = () => {
-  const role = userRole?.toLowerCase(); // userRole is null → role is undefined
-return role === 'employer' ? '/profile' : '/student/profile';
-
+// Determine dashboard route based on user role
+const getDashboardRoute = (role) => {
+  switch(role) {
+    case 'Employer':
+      return '/dashboard/employer';
+    case 'Candidate':
+      return '/dashboard/student';
+    default:
+      return '/dashboard/student'; // fallback
+  }
 };
 
+// Determine profile route based on user role
+const getProfileRoute = (role) => {
+  const normalizedRole = role?.toLowerCase();
+  return normalizedRole === 'employer' ? '/profile' : '/student/profile';
+};
   return (
     <>
       <nav className={`flex justify-between items-center p-4 md:p-6 mx-4 md:mx-6 my-2 md:my-4 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded-full transition-colors duration-300`}>
@@ -95,18 +99,19 @@ return role === 'employer' ? '/profile' : '/student/profile';
           <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <Link 
-                  to={getDashboardRoute()}
-                  className={`px-4 py-2 rounded-full text-sm ${
-                    isDarkMode 
-                      ? 'bg-black text-white' 
-                      : 'bg-white text-black'
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                <Link 
-  to={getProfileRoute()}
+<Link 
+  to={getDashboardRoute(userRole)}
+  className={`px-4 py-2 rounded-full text-sm ${
+    isDarkMode 
+      ? 'bg-black text-white' 
+      : 'bg-white text-black'
+  }`}
+>
+  Dashboard
+</Link>
+
+<Link 
+  to={getProfileRoute(userRole)}
   className={`px-4 py-2 rounded-full text-sm ${
     isDarkMode 
       ? 'bg-black text-white' 
@@ -114,8 +119,7 @@ return role === 'employer' ? '/profile' : '/student/profile';
   }`}
 >
   Profile
-</Link>
-                <button 
+</Link>        <button 
                   onClick={handleLogout}
                   className={`px-4 py-2 rounded-full text-sm border ${
                     isDarkMode 

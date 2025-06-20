@@ -85,6 +85,7 @@ export const setupEmployerProfile = (formData) => {
 };
 
 // ================= Auth API Endpoints =================
+export const googleSignIn = (idToken) => api.post('/users/google-signin/', { id_token: idToken });
 export const login = (credentials) => api.post('/users/token/', credentials);
 export const refreshToken = (refresh) => api.post('/users/token/refresh/', { refresh });
 export const verifyToken = (token) => api.post('/users/token/verify/', { token });
@@ -105,14 +106,19 @@ export const updateCandidatePreferences = (data) => api.patch('/users/profile/ca
 export const fetchAppliedJobs = () => api.get('/users/candidate/applications/jobs/');
 export const fetchAppliedInternships = () => api.get('/users/candidate/applications/internships/');
 // Add to src/services/api.js
-
+export const fetchCandidateApplications = () => {
+  return api.get('/jobs/candidate/applications/');
+};
 // Resume Endpoints
 export const getCandidateResume = () => {
   return api.get('/jobs/candidate/resume/');
 };
-
+// Add to src/services/api.js
+export const fetchRecentActivity = () => {
+  return api.get('/jobs/candidate/recent-activity/');
+};
 export const createOrUpdateCandidateResume = (data) => {
-  return api.post('/jobs/candidate/resume/', data);
+  return api.patch('/jobs/candidate/resume/', data);
 };
 
 export const deleteCandidateResume = () => {
@@ -135,12 +141,12 @@ export const fetchApplications = (params = {}) => {
   if (!params.job_id && !params.internship_id && !params.view_all) {
     throw new Error('Either job_id or internship_id must be provided.');
   }
-  return api.get('/jobs/applications/', { params });
+  return api.get('/jobs/employer/applications/', { params });
 };
 
 // Fetch single application details
 export const fetchApplicationDetails = (applicationId) => {
-  return api.get(`/jobs/applications/${applicationId}/`);
+  return api.get(`/jobs/employer/applications/${applicationId}/`);
 };
 
 // Update application status

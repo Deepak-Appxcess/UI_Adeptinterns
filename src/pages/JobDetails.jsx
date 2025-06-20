@@ -65,18 +65,38 @@ function JobDetails() {
     }
   };
 
-  const handleApplyClick = () => {
-    if (!isAuthenticated) {
-      navigate('/login', { state: { from: `/job/${id}` } });
+const handleApplyClick = async () => {
+  if (!isAuthenticated) {
+    navigate('/login', { state: { from: `/job/${id}` } });
+    return;
+  }
+
+  try {
+    // First check if resume exists
+    const resumeCheck = await api.get('/jobs/candidate/resume/');
+    
+    if (resumeCheck.data?.detail === "Resume not found.") {
+      // Case 1: No resume exists, navigate to resume page with redirect back
+      navigate('/resume', { state: { from: `/job/${id}` } });
       return;
     }
 
+    // Resume exists, proceed with application
     if (job.screening_questions && job.screening_questions.length > 0) {
       setShowScreeningQuestions(true);
     } else {
       handleApply();
     }
-  };
+  } catch (error) {
+    console.error('Error checking resume:', error);
+    if (error.response?.status === 404 || error.response?.data?.detail === "Resume not found.") {
+      // Case 1: No resume exists, navigate to resume page with redirect back
+      navigate('/resume', { state: { from: `/job/${id}` } });
+    } else {
+      toast.error('Failed to check resume status');
+    }
+  }
+};
 
   const handleAnswerChange = (index, value) => {
     const newAnswers = [...screeningAnswers];
@@ -107,7 +127,7 @@ function JobDetails() {
           if (err.response.data.screening_answers) {
             setApplicationError('Please answer all screening questions.');
           } else {
-            setApplicationError('Invalid application data. Please try again.');
+             setApplicationError(`Bad request: ${JSON.stringify(err.response.data)}`);
           }
         } else if (err.response.status === 403) {
           if (err.response.data.detail === 'Only candidates can complete this action.') {

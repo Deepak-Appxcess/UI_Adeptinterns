@@ -89,7 +89,7 @@ const EmployerDashboard = () => {
         if (data.role.name !== 'Employer') {
           navigate('/dashboard/student');
           return;
-        }
+        } 
         
         // Initialize personal info form data
         setPersonalInfoFormData({
