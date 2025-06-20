@@ -574,7 +574,7 @@ function Home({
                 <Link to={`/job/${job.id}`} className="text-blue-500 hover:text-blue-600">View details →</Link>
               </div>
             )) : (
-              <div className="col-span-3 text-center py-8">
+              <div className="col-span-4 text-center py-8">
                 <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>
                   No jobs found matching your criteria.
                 </p>
