@@ -536,7 +536,7 @@ function Home({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {filteredJobs.length > 0 ? filteredJobs.map((job, index) => (
               <div key={job.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
                 <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mb-2">
