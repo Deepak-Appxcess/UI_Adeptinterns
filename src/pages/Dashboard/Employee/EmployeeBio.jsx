@@ -19,7 +19,8 @@ import {
   AlertCircle,
   CheckCircle,
   Camera,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 import { 
   checkPhoneVerification,
@@ -286,11 +287,11 @@ const EmployerProfileSetup = ({ onComplete }) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-indigo-50 to-white">
+      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-gray-50 to-slate-100">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full"
+          className="w-12 h-12 border-4 border-[#18005F]/20 border-t-[#18005F] rounded-full"
         />
       </div>
     );
@@ -298,18 +299,18 @@ const EmployerProfileSetup = ({ onComplete }) => {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-8"
+          className="w-full max-w-md bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8"
         >
           <div className="text-center mb-8">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="w-16 h-16 bg-gradient-to-r from-[#18005F] to-[#18005F]/80 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             >
               <User className="h-8 w-8 text-white" />
             </motion.div>
@@ -331,7 +332,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   name="first_name"
                   value={userData.first_name}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                   disabled={!isEditing}
                 />
               </div>
@@ -350,7 +351,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   name="last_name"
                   value={userData.last_name}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                   disabled={!isEditing}
                 />
               </div>
@@ -369,7 +370,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   name="phone_number"
                   value={userData.phone_number}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                   disabled={!isEditing}
                 />
               </div>
@@ -394,7 +395,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setIsEditing(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                  className="px-6 py-3 bg-gradient-to-r from-[#18005F] to-[#18005F]/90 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                 >
                   Edit Details
                 </motion.button>
@@ -412,7 +413,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSave}
-                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                    className="px-6 py-3 bg-gradient-to-r from-[#18005F] to-[#18005F]/90 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                   >
                     Save Changes
                   </motion.button>
@@ -461,18 +462,18 @@ const EmployerProfileSetup = ({ onComplete }) => {
 
   if (step === 2) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-8"
+          className="w-full max-w-md bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8"
         >
           <div className="text-center mb-8">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             >
               <Phone className="h-8 w-8 text-white" />
             </motion.div>
@@ -491,7 +492,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                 type="text"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 text-center text-xl tracking-widest font-mono transition-all"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 text-center text-xl tracking-widest font-mono transition-all bg-gray-50/50"
                 maxLength="6"
                 pattern="\d{6}"
                 required
@@ -509,7 +510,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                 className={`text-sm font-medium transition-colors ${
                   countdown > 0 
                     ? 'text-gray-400 cursor-not-allowed' 
-                    : 'text-indigo-600 hover:text-indigo-700'
+                    : 'text-[#18005F] hover:text-[#18005F]/80'
                 }`}
               >
                 Resend Code {countdown > 0 && `(${countdown}s)`}
@@ -544,19 +545,19 @@ const EmployerProfileSetup = ({ onComplete }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-8"
+          className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8"
         >
           <div className="text-center mb-8">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="w-16 h-16 bg-gradient-to-r from-[#18005F] to-[#18005F]/80 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
             >
               <Building className="h-8 w-8 text-white" />
             </motion.div>
@@ -570,7 +571,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100"
+              className="bg-gradient-to-r from-[#18005F]/5 to-[#18005F]/10 p-6 rounded-2xl border border-[#18005F]/20"
             >
               <label className="block text-sm font-semibold text-gray-700 mb-4">
                 Account Type
@@ -580,7 +581,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   whileHover={{ scale: 1.02 }}
                   className={`relative flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
                     !formData.is_freelancer 
-                      ? 'border-indigo-500 bg-indigo-50' 
+                      ? 'border-[#18005F] bg-[#18005F]/5' 
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
@@ -596,11 +597,11 @@ const EmployerProfileSetup = ({ onComplete }) => {
                     className="sr-only"
                   />
                   <div className="flex items-center">
-                    <Building className="h-5 w-5 mr-3 text-indigo-600" />
+                    <Building className="h-5 w-5 mr-3 text-[#18005F]" />
                     <span className="font-medium text-gray-900">Organization</span>
                   </div>
                   {!formData.is_freelancer && (
-                    <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-indigo-600" />
+                    <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-[#18005F]" />
                   )}
                 </motion.label>
                 
@@ -608,7 +609,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   whileHover={{ scale: 1.02 }}
                   className={`relative flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
                     formData.is_freelancer 
-                      ? 'border-indigo-500 bg-indigo-50' 
+                      ? 'border-[#18005F] bg-[#18005F]/5' 
                       : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
@@ -624,11 +625,11 @@ const EmployerProfileSetup = ({ onComplete }) => {
                     className="sr-only"
                   />
                   <div className="flex items-center">
-                    <User className="h-5 w-5 mr-3 text-indigo-600" />
+                    <User className="h-5 w-5 mr-3 text-[#18005F]" />
                     <span className="font-medium text-gray-900">Freelancer</span>
                   </div>
                   {formData.is_freelancer && (
-                    <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-indigo-600" />
+                    <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-[#18005F]" />
                   )}
                 </motion.label>
               </div>
@@ -652,7 +653,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                     name="designation"
                     value={formData.designation}
                     onChange={handleFormChange}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                     required
                     placeholder="e.g., CEO, HR Manager, Developer"
                   />
@@ -671,7 +672,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                     name="city"
                     value={formData.city}
                     onChange={handleFormChange}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                     required
                     placeholder="e.g., New York, London, Remote"
                   />
@@ -698,7 +699,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                     name="industry"
                     value={formData.industry}
                     onChange={handleFormChange}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                     required
                     placeholder={formData.is_freelancer ? "e.g. Web Development, Design" : "e.g. Tech, Finance"}
                   />
@@ -721,7 +722,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                       no_of_employees: parseInt(e.target.value) || (formData.is_freelancer ? 1 : '')
                     }))}
                     min="1"
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                     required
                     placeholder={formData.is_freelancer ? "1" : "e.g. 50"}
                   />
@@ -741,7 +742,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100"
                 >
                   <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                    <Building className="h-5 w-5 mr-2 text-indigo-600" />
+                    <Building className="h-5 w-5 mr-2 text-[#18005F]" />
                     Organization Details
                   </h3>
                   
@@ -755,7 +756,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                         name="organization_name"
                         value={formData.organization_name}
                         onChange={handleFormChange}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                         required
                         placeholder="e.g., ADEPTINTERNS Inc."
                       />
@@ -771,7 +772,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                         value={formData.organization_description}
                         onChange={handleFormChange}
                         rows={4}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm resize-none"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm resize-none bg-gray-50/50"
                         required
                         placeholder="Describe your organization, its mission, and what you do..."
                       />
@@ -787,7 +788,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                           name="verification_method"
                           value={formData.verification_method}
                           onChange={handleFormChange}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                           required
                         >
                           <option value="Email">Email</option>
@@ -814,7 +815,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                             name="verification_value"
                             value={formData.verification_value}
                             onChange={handleFormChange}
-                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm bg-gray-50/50"
                             required
                             placeholder={
                               formData.verification_method === 'Email' ? 'hr@company.com' :
@@ -849,7 +850,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                           </div>
                         ) : (
                           <label className="cursor-pointer">
-                            <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+                            <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-[#18005F] hover:bg-[#18005F]/5 transition-all">
                               <Camera className="w-6 h-6 text-gray-400 mb-1" />
                               <span className="text-xs text-gray-500">Upload</span>
                             </div>
@@ -898,7 +899,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                       value={formData.about_freelancer}
                       onChange={handleFormChange}
                       rows={6}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-sm resize-none"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-sm resize-none bg-gray-50/50"
                       placeholder="Describe your skills, experience, and services you offer..."
                       required
                     />
@@ -930,7 +931,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disable:cursor-not-allowed"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-[#18005F] to-[#18005F]/90 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
@@ -939,6 +940,7 @@ const EmployerProfileSetup = ({ onComplete }) => {
                   </>
                 ) : (
                   <>
+                    <Sparkles className="w-5 h-5 mr-2" />
                     Complete Setup
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </>

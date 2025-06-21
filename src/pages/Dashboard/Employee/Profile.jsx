@@ -1,350 +1,336 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
   Building, 
   MapPin, 
-  Briefcase, 
-  Globe, 
   Users, 
-  Mail, 
-  Phone, 
   FileText, 
-  Camera, 
-  Edit3, 
-  Save, 
-  X, 
-  CheckCircle, 
+  Upload, 
+  Check, 
+  ArrowRight, 
+  Briefcase,
+  Globe,
+  Phone,
+  Mail,
+  Shield,
+  Star,
+  Loader2,
   AlertCircle,
-  Lock,
+  CheckCircle,
+  Camera,
+  X,
+  Edit3,
+  Save,
   Eye,
   EyeOff,
-  Loader2,
-  Shield
+  Lock
 } from 'lucide-react';
-import api from '../../../services/api';
-import EmployeeBio from './EmployeeBio';
+import { 
+  checkPhoneVerification,
+  resendPhoneOTP,
+  verifyPhoneOTP,
+  fetchUserProfile,
+  updateProfile,
+  setupEmployerProfile,
+  changePassword
+} from '../../../services/api';
 
-const EmployerDashboard = () => {
+const EmployerProfile = () => {
+  const [activeTab, setActiveTab] = useState('personal');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingPersonalInfo, setEditingPersonalInfo] = useState(false);
-  const [editingOrgInfo, setEditingOrgInfo] = useState(false);
-  const [editingFreelancerInfo, setEditingFreelancerInfo] = useState(false);
-  const [editingPassword, setEditingPassword] = useState(false);
-  
-  const [personalInfoFormData, setPersonalInfoFormData] = useState({
-    first_name: '',
-    last_name: '',
-    phone_number: ''
-  });
-
-  const [orgInfoFormData, setOrgInfoFormData] = useState({
-    designation: '',
-    city: '',
-    organization_name: '',
-    organization_description: '',
-    industry: '',
-    no_of_employees: '',
-    verification_method: 'Email',
-    verification_value: '',
-    is_freelancer: false,
-    organization_logo: null
-  });
-
-  const [freelancerInfoFormData, setFreelancerInfoFormData] = useState({
-    designation: '',
-    is_freelancer: true,
-    city: '',
-    industry: 'Freelance',
-    no_of_employees: 1,
-    about_freelancer: ''
-  });
-
-  const [passwordFormData, setPasswordFormData] = useState({
-    old_password: '',
+  const [isEditing, setIsEditing] = useState({});
+  const [formData, setFormData] = useState({});
+  const [organizationData, setOrganizationData] = useState({});
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
     new_password: '',
     confirm_password: ''
   });
-
-  const [showOldPassword, setShowOldPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordErrors, setPasswordErrors] = useState({});
-
+  const [showPassword, setShowPassword] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errors, setErrors] = useState({});
+  
+  // Phone verification states
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [resendDisabled, setResendDisabled] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
+  
+  // Organization form states
   const [logoPreview, setLogoPreview] = useState(null);
-  const [updateLoading, setUpdateLoading] = useState(false);
-  const [updateError, setUpdateError] = useState(null);
-  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [showOrganizationForm, setShowOrganizationForm] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const { data } = await api.get('/users/profile/');
-        setProfile(data);
-        
-        if (data.role.name !== 'Employer') {
-          navigate('/dashboard/student');
-          return;
-        } 
-        
-        // Initialize personal info form data
-        setPersonalInfoFormData({
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
-          phone_number: data.phone_number || ''
-        });
-
-        // Initialize organization or freelancer info if exists
-        if (data.employer_profile) {
-          if (data.has_completed_freelancer_details) {
-            setFreelancerInfoFormData({
-              designation: data.employer_profile.designation || '',
-              city: data.employer_profile.city || '',
-              industry: data.employer_profile.industry || 'Freelance',
-              no_of_employees: data.employer_profile.no_of_employees || 1,
-              is_freelancer: true,
-              about_freelancer: data.employer_profile.about_freelancer || ''
-            });
-          } else {
-            setOrgInfoFormData({
-              designation: data.employer_profile.designation || '',
-              city: data.employer_profile.city || '',
-              organization_name: data.employer_profile.organization_name || '',
-              organization_description: data.employer_profile.organization_description || '',
-              industry: data.employer_profile.industry || '',
-              no_of_employees: data.employer_profile.no_of_employees || '',
-              verification_method: data.employer_profile.verification_method || 'Email',
-              verification_value: data.employer_profile.verification_value || '',
-              is_freelancer: false,
-              organization_logo: null
-            });
-            if (data.employer_profile.organization_logo_url) {
-              setLogoPreview(data.employer_profile.organization_logo_url);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError('Failed to load profile data');
-        if (err.response?.status === 401) {
-          navigate('/login');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
-  }, [navigate]);
+  }, []);
 
-  const handleProfileComplete = () => {
-    // Refetch profile after completion
-    api.get('/users/profile/').then(({ data }) => setProfile(data));
+  useEffect(() => {
+    let timer;
+    if (resendDisabled && resendTimer > 0) {
+      timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+    } else if (resendTimer === 0) {
+      setResendDisabled(false);
+      setResendTimer(60);
+    }
+    return () => clearTimeout(timer);
+  }, [resendDisabled, resendTimer]);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchUserProfile();
+      setProfile(response.data);
+      setFormData({
+        first_name: response.data.first_name || '',
+        last_name: response.data.last_name || '',
+        email: response.data.email || '',
+        phone_number: response.data.phone_number || ''
+      });
+      
+      // Initialize organization data if employer profile exists
+      if (response.data.employer_profile) {
+        setOrganizationData({
+          designation: response.data.employer_profile.designation || '',
+          city: response.data.employer_profile.city || '',
+          industry: response.data.employer_profile.industry || '',
+          no_of_employees: response.data.employer_profile.no_of_employees || '',
+          is_freelancer: response.data.employer_profile.is_freelancer || false,
+          about_freelancer: response.data.employer_profile.about_freelancer || '',
+          organization_name: response.data.employer_profile.organization_name || '',
+          organization_description: response.data.employer_profile.organization_description || '',
+          verification_method: response.data.employer_profile.verification_method || 'Email',
+          verification_value: response.data.employer_profile.verification_value || '',
+          organization_logo: null
+        });
+      } else {
+        // Initialize with default values
+        setOrganizationData({
+          designation: '',
+          city: '',
+          industry: '',
+          no_of_employees: '',
+          is_freelancer: false,
+          about_freelancer: '',
+          organization_name: '',
+          organization_description: '',
+          verification_method: 'Email',
+          verification_value: '',
+          organization_logo: null
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to load profile data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePersonalInfoChange = (e) => {
-    const { name, value } = e.target;
-    setPersonalInfoFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleEdit = (section) => {
+    setIsEditing(prev => ({ ...prev, [section]: true }));
+    setErrors({});
+    setSuccessMessage('');
   };
 
-  const handleOrgInfoChange = (e) => {
-    const { name, value } = e.target;
-    setOrgInfoFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleFreelancerInfoChange = (e) => {
-    const { name, value } = e.target;
-    setFreelancerInfoFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleCancel = (section) => {
+    setIsEditing(prev => ({ ...prev, [section]: false }));
+    setErrors({});
+    setSuccessMessage('');
     
-    // Clear specific error when user starts typing
-    if (passwordErrors[name]) {
-      setPasswordErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-
-  const handleOrgFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setOrgInfoFormData(prev => ({ ...prev, organization_logo: file }));
-      setLogoPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handlePersonalInfoSubmit = async (e) => {
-    e.preventDefault();
-    setUpdateLoading(true);
-    setUpdateError(null);
-    setUpdateSuccess(false);
-
-    try {
-      await api.patch('/users/profile/update/', personalInfoFormData);
-      setUpdateSuccess(true);
-      setEditingPersonalInfo(false);
-      // Refresh profile data
-      const { data } = await api.get('/users/profile/');
-      setProfile(data);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setUpdateError(error.response?.data?.message || 'Failed to update personal information');
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
-
-  const handleOrgInfoSubmit = async (e) => {
-    e.preventDefault();
-    setUpdateLoading(true);
-    setUpdateError(null);
-    setUpdateSuccess(false);
-
-    try {
-      const formData = new FormData();
-      Object.entries(orgInfoFormData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value);
-        }
+    if (section === 'personal') {
+      setFormData({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        email: profile.email || '',
+        phone_number: profile.phone_number || ''
       });
-  
-      await api.patch('/users/profile/employer/setup/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      setUpdateSuccess(true);
-      setEditingOrgInfo(false);
-      // Refresh profile data
-      const { data } = await api.get('/users/profile/');
-      setProfile(data);
-    } catch (error) {
-      console.error('Error updating organization info:', error);
-      setUpdateError(error.response?.data?.message || 'Failed to update organization information');
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
-
-  const handleFreelancerInfoSubmit = async (e) => {
-    e.preventDefault();
-    setUpdateLoading(true);
-    setUpdateError(null);
-    setUpdateSuccess(false);
-
-    try {
-      await api.patch('/users/profile/employer/setup/', freelancerInfoFormData);
-      setUpdateSuccess(true);
-      setEditingFreelancerInfo(false);
-      // Refresh profile data
-      const { data } = await api.get('/users/profile/');
-      setProfile(data);
-    } catch (error) {
-      console.error('Error updating freelancer info:', error);
-      setUpdateError(error.response?.data?.message || 'Failed to update freelancer information');
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    setUpdateLoading(true);
-    setPasswordErrors({});
-    setUpdateError(null);
-    setUpdateSuccess(false);
-
-    // Validate passwords
-    const errors = {};
-    if (!passwordFormData.old_password) {
-      errors.old_password = 'Current password is required';
-    }
-    if (!passwordFormData.new_password) {
-      errors.new_password = 'New password is required';
-    } else if (passwordFormData.new_password.length < 6) {
-      errors.new_password = 'Password must be at least 6 characters';
-    }
-    if (passwordFormData.new_password !== passwordFormData.confirm_password) {
-      errors.confirm_password = 'Passwords do not match';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setPasswordErrors(errors);
-      setUpdateLoading(false);
-      return;
-    }
-
-    try {
-      await api.patch('/users/profile/update/', {
-        old_password: passwordFormData.old_password,
-        new_password: passwordFormData.new_password
-      });
-      
-      setUpdateSuccess(true);
-      setEditingPassword(false);
-      setPasswordFormData({
-        old_password: '',
+    } else if (section === 'password') {
+      setPasswordData({
+        current_password: '',
         new_password: '',
         confirm_password: ''
       });
-    } catch (error) {
-      console.error('Error changing password:', error);
-      if (error.response?.data) {
-        setPasswordErrors(error.response.data);
-      } else {
-        setUpdateError('Failed to change password. Please try again.');
-      }
-    } finally {
-      setUpdateLoading(false);
     }
   };
 
+  const handleInputChange = (e, section) => {
+    const { name, value } = e.target;
+    
+    if (section === 'personal') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    } else if (section === 'password') {
+      setPasswordData(prev => ({ ...prev, [name]: value }));
+    } else if (section === 'organization') {
+      setOrganizationData(prev => ({ ...prev, [name]: value }));
+    }
+    
+    // Clear errors when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, organization_logo: 'File size must be less than 5MB' }));
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({ ...prev, organization_logo: 'Please select an image file' }));
+        return;
+      }
+
+      setOrganizationData(prev => ({ ...prev, organization_logo: file }));
+      setLogoPreview(URL.createObjectURL(file));
+      setErrors(prev => ({ ...prev, organization_logo: '' }));
+    }
+  };
+
+  const removeFile = () => {
+    setOrganizationData(prev => ({ ...prev, organization_logo: null }));
+    setLogoPreview(null);
+    setErrors(prev => ({ ...prev, organization_logo: '' }));
+  };
+
+  const handleSave = async (section) => {
+    try {
+      setIsSubmitting(true);
+      setErrors({});
+
+      if (section === 'personal') {
+        await updateProfile(formData);
+        setSuccessMessage('Personal information updated successfully');
+        await fetchProfile();
+      } else if (section === 'password') {
+        if (passwordData.new_password !== passwordData.confirm_password) {
+          setErrors({ confirm_password: 'Passwords do not match' });
+          return;
+        }
+        await changePassword(passwordData);
+        setSuccessMessage('Password updated successfully');
+        setPasswordData({
+          current_password: '',
+          new_password: '',
+          confirm_password: ''
+        });
+      }
+
+      setIsEditing(prev => ({ ...prev, [section]: false }));
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error(`Error updating ${section}:`, error);
+      if (error.response?.data) {
+        setErrors(error.response.data);
+      } else {
+        setErrors({ general: `Failed to update ${section}. Please try again.` });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePhoneVerification = async () => {
+    if (!profile.is_phone_verified) {
+      setShowPhoneVerification(true);
+      try {
+        await resendPhoneOTP({ phone_number: profile.phone_number });
+      } catch (error) {
+        console.error('Error sending OTP:', error);
+        setOtpError('Failed to send OTP. Please try again.');
+      }
+    }
+  };
+
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await verifyPhoneOTP({
+        phone_number: profile.phone_number,
+        code: otp
+      });
+      setShowPhoneVerification(false);
+      setShowOrganizationForm(true);
+      await fetchProfile();
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      setOtpError('Invalid OTP. Please try again.');
+    }
+  };
+
+  const handleOrganizationSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      setErrors({});
+
+      const data = new FormData();
+      Object.keys(organizationData).forEach(key => {
+        if (organizationData[key] !== null && organizationData[key] !== undefined) {
+          if (key === 'organization_logo' && organizationData[key] instanceof File) {
+            data.append(key, organizationData[key]);
+          } else {
+            data.append(key, organizationData[key]);
+          }
+        }
+      });
+
+      await setupEmployerProfile(data);
+      setSuccessMessage('Organization profile updated successfully');
+      setShowOrganizationForm(false);
+      await fetchProfile();
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Error updating organization profile:', error);
+      if (error.response?.data) {
+        setErrors(error.response.data);
+      } else {
+        setErrors({ general: 'Failed to update organization profile. Please try again.' });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const tabs = [
+    { id: 'personal', label: 'Personal Information', icon: User },
+    { id: 'password', label: 'Password', icon: Lock },
+    { id: 'organization', label: 'Organization Profile', icon: Building }
+  ];
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-indigo-50 to-white">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full"
-        />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#18005F] mb-4" />
+          <p className="text-gray-600 font-medium">Loading profile...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-red-50 to-white">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
-          <p className="text-red-600 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Profile</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={fetchProfile}
+            className="px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
           >
             Try Again
           </button>
@@ -353,995 +339,820 @@ const EmployerDashboard = () => {
     );
   }
 
-  if (!profile) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 p-6">
-      <div className="max-w-7xl mx-auto pt-16">
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6"
-        >
-          My Profile
-        </motion.h1>
-        
-        {/* Personal Information Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg mb-6 relative"
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <User className="w-5 h-5 mr-2 text-indigo-600" />
-              Personal Information
-            </h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setEditingPersonalInfo(!editingPersonalInfo);
-                setUpdateError(null);
-                setUpdateSuccess(false);
-              }}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-            >
-              {editingPersonalInfo ? 'Cancel' : 'Edit'}
-            </motion.button>
-          </div>
-
-          {editingPersonalInfo ? (
-            <form onSubmit={handlePersonalInfoSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">First Name*</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type="text"
-                      name="first_name"
-                      value={personalInfoFormData.first_name}
-                      onChange={handlePersonalInfoChange}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name*</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type="text"
-                      name="last_name"
-                      value={personalInfoFormData.last_name}
-                      onChange={handlePersonalInfoChange}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type="tel"
-                      name="phone_number"
-                      value={personalInfoFormData.phone_number}
-                      onChange={handlePersonalInfoChange}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      placeholder="e.g., +12025550123"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {updateError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl"
-                  >
-                    <div className="flex items-center">
-                      <AlertCircle className="w-5 h-5 mr-2" />
-                      <p className="text-sm">{updateError}</p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {updateSuccess && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl"
-                  >
-                    <div className="flex items-center">
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      <p className="text-sm">Personal information updated successfully!</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex justify-end space-x-4 mt-6">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  onClick={() => {
-                    setEditingPersonalInfo(false);
-                    setUpdateError(null);
-                    setUpdateSuccess(false);
-                  }}
-                  className="px-4 py-2 border-2 border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all text-sm font-medium"
-                  disabled={updateLoading}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all text-sm disabled:opacity-70"
-                  disabled={updateLoading}
-                >
-                  {updateLoading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
-                      Saving...
-                    </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-[#18005F] rounded-xl flex items-center justify-center">
+              <User className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {profile.first_name} {profile.last_name}
+              </h1>
+              <p className="text-gray-600">{profile.email}</p>
+              <div className="flex items-center mt-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  profile.is_phone_verified 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {profile.is_phone_verified ? (
+                    <>
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Phone Verified
+                    </>
                   ) : (
-                    <div className="flex items-center">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </div>
+                    <>
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Phone Not Verified
+                    </>
                   )}
-                </motion.button>
-              </div>
-            </form>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                <p className="text-sm text-gray-500 mb-1">First Name</p>
-                <p className="font-semibold text-gray-900">{profile.first_name || 'Not provided'}</p>
-              </div>
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                <p className="text-sm text-gray-500 mb-1">Last Name</p>
-                <p className="font-semibold text-gray-900">{profile.last_name || 'Not provided'}</p>
-              </div>
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                <p className="text-sm text-gray-500 mb-1">Email</p>
-                <p className="font-semibold text-gray-900">{profile.email}</p>
-              </div>
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                <p className="text-sm text-gray-500 mb-1">Phone Number</p>
-                <p className="font-semibold text-gray-900">{profile.phone_number || 'Not provided'}</p>
-              </div>
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                <p className="text-sm text-gray-500 mb-1">Account Type</p>
-                <p className="font-semibold text-gray-900">{profile.role?.name || 'Employer'}</p>
-              </div>
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                <p className="text-sm text-gray-500 mb-1">Joined</p>
-                <p className="font-semibold text-gray-900">
-                  {profile.date_joined ? new Date(profile.date_joined).toLocaleDateString() : 'Not available'}
-                </p>
+                </span>
               </div>
             </div>
-          )}
-        </motion.div>
+          </div>
+        </div>
 
-        {/* Password Change Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg mb-6 relative"
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <Lock className="w-5 h-5 mr-2 text-indigo-600" />
-              Password
-            </h2>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setEditingPassword(!editingPassword);
-                setPasswordErrors({});
-                setUpdateError(null);
-                setUpdateSuccess(false);
-              }}
-              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+        {/* Success Message */}
+        <AnimatePresence>
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6"
             >
-              {editingPassword ? 'Cancel' : 'Change Password'}
-            </motion.button>
+              <div className="flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                {successMessage}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      activeTab === tab.id
+                        ? 'border-[#18005F] text-[#18005F]'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
-          <AnimatePresence>
-            {editingPassword ? (
-              <motion.form
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                onSubmit={handlePasswordSubmit}
-                className="space-y-6"
-              >
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Current Password*</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type={showOldPassword ? "text" : "password"}
-                      name="old_password"
-                      value={passwordFormData.old_password}
-                      onChange={handlePasswordChange}
-                      className={`w-full pl-10 pr-10 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all text-sm ${
-                        passwordErrors.old_password ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-indigo-500'
-                      }`}
-                      required
-                    />
+          <div className="p-6">
+            {/* Personal Information Tab */}
+            {activeTab === 'personal' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+                  {!isEditing.personal ? (
                     <button
-                      type="button"
-                      onClick={() => setShowOldPassword(!showOldPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      onClick={() => handleEdit('personal')}
+                      className="flex items-center px-4 py-2 text-[#18005F] border border-[#18005F] rounded-lg hover:bg-[#18005F]/5 transition-colors"
                     >
-                      {showOldPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      )}
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Edit
                     </button>
-                  </div>
-                  {passwordErrors.old_password && (
-                    <p className="mt-1 text-sm text-red-600">{passwordErrors.old_password}</p>
+                  ) : (
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => handleCancel('personal')}
+                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSave('personal')}
+                        disabled={isSubmitting}
+                        className="flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">New Password*</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      name="new_password"
-                      value={passwordFormData.new_password}
-                      onChange={handlePasswordChange}
-                      className={`w-full pl-10 pr-10 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all text-sm ${
-                        passwordErrors.new_password ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-indigo-500'
-                      }`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                    >
-                      {showNewPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-                  {passwordErrors.new_password && (
-                    <p className="mt-1 text-sm text-red-600">{passwordErrors.new_password}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password*</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      name="confirm_password"
-                      value={passwordFormData.confirm_password}
-                      onChange={handlePasswordChange}
-                      className={`w-full pl-10 pr-10 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all text-sm ${
-                        passwordErrors.confirm_password ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-indigo-500'
-                      }`}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-                  {passwordErrors.confirm_password && (
-                    <p className="mt-1 text-sm text-red-600">{passwordErrors.confirm_password}</p>
-                  )}
-                </div>
-
-                <AnimatePresence>
-                  {updateError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl"
-                    >
-                      <div className="flex items-center">
-                        <AlertCircle className="w-5 h-5 mr-2" />
-                        <p className="text-sm">{updateError}</p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {updateSuccess && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl"
-                    >
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        <p className="text-sm">Password changed successfully!</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex justify-end space-x-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={() => {
-                      setEditingPassword(false);
-                      setPasswordFormData({
-                        old_password: '',
-                        new_password: '',
-                        confirm_password: ''
-                      });
-                      setPasswordErrors({});
-                    }}
-                    className="px-4 py-2 border-2 border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all text-sm font-medium"
-                    disabled={updateLoading}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all text-sm disabled:opacity-70"
-                    disabled={updateLoading}
-                  >
-                    {updateLoading ? (
-                      <div className="flex items-center">
-                        <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
-                        Updating...
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <Shield className="w-4 h-4 mr-2" />
-                        Update Password
-                      </div>
-                    )}
-                  </motion.button>
-                </div>
-              </motion.form>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl"
-              >
-                <p className="text-sm text-gray-600">
-                  Your password is securely stored. For security reasons, we recommend changing your password regularly.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Profile Completion Section */}
-        {!profile.has_completed_organization && !profile.has_completed_freelancer_details ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg mb-6"
-          >
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Building className="w-5 h-5 mr-2 text-indigo-600" />
-                  Complete Your Profile
-                </h2>
-                <div className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
-                  Required
-                </div>
-              </div>
-              <p className="mt-2 text-gray-600">
-                Your profile is incomplete. Complete it to start posting jobs and internships.
-              </p>
-            </div>
-            <EmployeeBio onComplete={handleProfileComplete} />
-          </motion.div>
-        ) : profile.has_completed_freelancer_details ? (
-          // Freelancer profile view
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg mb-6 relative"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <User className="w-5 h-5 mr-2 text-indigo-600" />
-                Freelancer Information
-              </h2>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setEditingFreelancerInfo(!editingFreelancerInfo);
-                  setUpdateError(null);
-                  setUpdateSuccess(false);
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-              >
-                {editingFreelancerInfo ? 'Cancel' : 'Edit'}
-              </motion.button>
-            </div>
-            
-            {editingFreelancerInfo ? (
-              <form onSubmit={handleFreelancerInfoSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Designation*</label>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name
+                    </label>
+                    {isEditing.personal ? (
                       <input
                         type="text"
-                        name="designation"
-                        value={freelancerInfoFormData.designation}
-                        onChange={handleFreelancerInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
+                        name="first_name"
+                        value={formData.first_name}
+                        onChange={(e) => handleInputChange(e, 'personal')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
                       />
-                    </div>
+                    ) : (
+                      <p className="text-gray-900 py-2">{profile.first_name || 'Not provided'}</p>
+                    )}
+                    {errors.first_name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>
+                    )}
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Location*</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    {isEditing.personal ? (
                       <input
                         type="text"
-                        name="city"
-                        value={freelancerInfoFormData.city}
-                        onChange={handleFreelancerInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
+                        name="last_name"
+                        value={formData.last_name}
+                        onChange={(e) => handleInputChange(e, 'personal')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
                       />
-                    </div>
+                    ) : (
+                      <p className="text-gray-900 py-2">{profile.last_name || 'Not provided'}</p>
+                    )}
+                    {errors.last_name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>
+                    )}
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Industry*</label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    {isEditing.personal ? (
                       <input
-                        type="text"
-                        name="industry"
-                        value={freelancerInfoFormData.industry}
-                        onChange={handleFreelancerInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange(e, 'personal')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
                       />
-                    </div>
+                    ) : (
+                      <p className="text-gray-900 py-2">{profile.email}</p>
+                    )}
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                    )}
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Team Size*</label>
-                    <div className="relative">
-                      <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        type="number"
-                        name="no_of_employees"
-                        value={freelancerInfoFormData.no_of_employees}
-                        onChange={handleFreelancerInfoChange}
-                        min="1"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
-                      />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <div className="flex items-center space-x-3">
+                      {isEditing.personal ? (
+                        <input
+                          type="tel"
+                          name="phone_number"
+                          value={formData.phone_number}
+                          onChange={(e) => handleInputChange(e, 'personal')}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
+                        />
+                      ) : (
+                        <p className="text-gray-900 py-2 flex-1">{profile.phone_number || 'Not provided'}</p>
+                      )}
+                      {!profile.is_phone_verified && (
+                        <button
+                          onClick={handlePhoneVerification}
+                          className="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors"
+                        >
+                          Verify
+                        </button>
+                      )}
                     </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">About You*</label>
-                    <textarea
-                      name="about_freelancer"
-                      value={freelancerInfoFormData.about_freelancer}
-                      onChange={handleFreelancerInfoChange}
-                      rows={4}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      required
-                    />
+                    {errors.phone_number && (
+                      <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>
+                    )}
                   </div>
                 </div>
+              </div>
+            )}
 
-                <AnimatePresence>
-                  {updateError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl"
+            {/* Password Tab */}
+            {activeTab === 'password' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
+                  {!isEditing.password ? (
+                    <button
+                      onClick={() => handleEdit('password')}
+                      className="flex items-center px-4 py-2 text-[#18005F] border border-[#18005F] rounded-lg hover:bg-[#18005F]/5 transition-colors"
                     >
-                      <div className="flex items-center">
-                        <AlertCircle className="w-5 h-5 mr-2" />
-                        <p className="text-sm">{updateError}</p>
-                      </div>
-                    </motion.div>
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Change Password
+                    </button>
+                  ) : (
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => handleCancel('password')}
+                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSave('password')}
+                        disabled={isSubmitting}
+                        className="flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Update Password
+                      </button>
+                    </div>
                   )}
+                </div>
 
-                  {updateSuccess && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl"
+                {isEditing.password && (
+                  <div className="space-y-4 max-w-md">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Current Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword.current ? "text" : "password"}
+                          name="current_password"
+                          value={passwordData.current_password}
+                          onChange={(e) => handleInputChange(e, 'password')}
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(prev => ({ ...prev, current: !prev.current }))}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        >
+                          {showPassword.current ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+                      {errors.current_password && (
+                        <p className="mt-1 text-sm text-red-600">{errors.current_password}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword.new ? "text" : "password"}
+                          name="new_password"
+                          value={passwordData.new_password}
+                          onChange={(e) => handleInputChange(e, 'password')}
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(prev => ({ ...prev, new: !prev.new }))}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        >
+                          {showPassword.new ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+                      {errors.new_password && (
+                        <p className="mt-1 text-sm text-red-600">{errors.new_password}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword.confirm ? "text" : "password"}
+                          name="confirm_password"
+                          value={passwordData.confirm_password}
+                          onChange={(e) => handleInputChange(e, 'password')}
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(prev => ({ ...prev, confirm: !prev.confirm }))}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        >
+                          {showPassword.confirm ? (
+                            <EyeOff className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-gray-400" />
+                          )}
+                        </button>
+                      </div>
+                      {errors.confirm_password && (
+                        <p className="mt-1 text-sm text-red-600">{errors.confirm_password}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!isEditing.password && (
+                  <div className="text-gray-600">
+                    <p>Click "Change Password" to update your password.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Organization Profile Tab */}
+            {activeTab === 'organization' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">Organization Profile</h3>
+                  {profile.has_completed_organization && (
+                    <button
+                      onClick={() => setShowOrganizationForm(true)}
+                      className="flex items-center px-4 py-2 text-[#18005F] border border-[#18005F] rounded-lg hover:bg-[#18005F]/5 transition-colors"
                     >
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        <p className="text-sm">Freelancer information updated successfully!</p>
-                      </div>
-                    </motion.div>
+                      <Edit3 className="w-4 h-4 mr-2" />
+                      Edit
+                    </button>
                   )}
-                </AnimatePresence>
+                </div>
 
-                <div className="flex justify-end space-x-4 mt-6">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={() => {
-                      setEditingFreelancerInfo(false);
-                      setUpdateError(null);
-                      setUpdateSuccess(false);
-                    }}
-                    className="px-4 py-2 border-2 border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all text-sm font-medium"
-                    disabled={updateLoading}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all text-sm disabled:opacity-70"
-                    disabled={updateLoading}
-                  >
-                    {updateLoading ? (
-                      <div className="flex items-center">
-                        <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
-                        Saving...
+                {!profile.is_phone_verified ? (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
+                      <div>
+                        <h4 className="text-sm font-medium text-yellow-800">Phone Verification Required</h4>
+                        <p className="text-sm text-yellow-700 mt-1">
+                          Please verify your phone number before setting up your organization profile.
+                        </p>
+                        <button
+                          onClick={handlePhoneVerification}
+                          className="mt-2 px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 transition-colors"
+                        >
+                          Verify Phone Number
+                        </button>
                       </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                    </div>
+                  </div>
+                ) : !profile.has_completed_organization ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <Building className="w-5 h-5 text-blue-600 mr-3" />
+                      <div>
+                        <h4 className="text-sm font-medium text-blue-800">Complete Your Organization Profile</h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Set up your organization profile to start posting jobs and internships.
+                        </p>
+                        <button
+                          onClick={() => setShowOrganizationForm(true)}
+                          className="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors"
+                        >
+                          Setup Organization Profile
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {profile.employer_profile && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                          <p className="text-gray-900">{profile.employer_profile.designation}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                          <p className="text-gray-900">{profile.employer_profile.city}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                          <p className="text-gray-900">{profile.employer_profile.industry}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Number of Employees</label>
+                          <p className="text-gray-900">{profile.employer_profile.no_of_employees}</p>
+                        </div>
+                        {!profile.employer_profile.is_freelancer && (
+                          <>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Organization Name</label>
+                              <p className="text-gray-900">{profile.employer_profile.organization_name}</p>
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Organization Description</label>
+                              <p className="text-gray-900">{profile.employer_profile.organization_description}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Verification Method</label>
+                              <p className="text-gray-900">{profile.employer_profile.verification_method}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Verification Value</label>
+                              <p className="text-gray-900">{profile.employer_profile.verification_value}</p>
+                            </div>
+                          </>
+                        )}
+                        {profile.employer_profile.is_freelancer && (
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">About Freelancer</label>
+                            <p className="text-gray-900">{profile.employer_profile.about_freelancer}</p>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </motion.button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Phone Verification Modal */}
+      <AnimatePresence>
+        {showPhoneVerification && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl p-6 w-full max-w-md"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Verify Phone Number</h3>
+              <p className="text-gray-600 mb-4">
+                Enter the 6-digit code sent to {profile.phone_number}
+              </p>
+              
+              <form onSubmit={handleOtpSubmit} className="space-y-4">
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="w-full px-3 py-2 text-center text-lg font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
+                  maxLength={6}
+                />
+                
+                {otpError && (
+                  <p className="text-sm text-red-600">{otpError}</p>
+                )}
+                
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowPhoneVerification(false)}
+                    className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={otp.length !== 6}
+                    className="flex-1 px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 disabled:opacity-50"
+                  >
+                    Verify
+                  </button>
                 </div>
               </form>
-            ) : (
-              profile.employer_profile && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-500 mb-1">Designation</p>
-                    <p className="font-semibold text-gray-900">{profile.employer_profile.designation}</p>
-                  </div>
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-500 mb-1">Location</p>
-                    <p className="font-semibold text-gray-900">{profile.employer_profile.city}</p>
-                  </div>
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-500 mb-1">Industry</p>
-                    <p className="font-semibold text-gray-900">{profile.employer_profile.industry}</p>
-                  </div>
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-500 mb-1">Team Size</p>
-                    <p className="font-semibold text-gray-900">{profile.employer_profile.no_of_employees}</p>
-                  </div>
-                  <div className="md:col-span-2 bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                    <p className="text-sm text-gray-500 mb-1">About</p>
-                    <p className="font-semibold text-gray-900">{profile.employer_profile.about_freelancer}</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Organization Form Modal */}
+      <AnimatePresence>
+        {showOrganizationForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl p-6 w-full max-w-2xl my-8"
+            >
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Organization Profile</h3>
+              
+              <form onSubmit={handleOrganizationSubmit} className="space-y-6">
+                {/* Account Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Account Type</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className={`relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      !organizationData.is_freelancer 
+                        ? 'border-[#18005F] bg-[#18005F]/5' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <input
+                        type="radio"
+                        checked={!organizationData.is_freelancer}
+                        onChange={() => setOrganizationData(prev => ({ ...prev, is_freelancer: false }))}
+                        className="sr-only"
+                      />
+                      <div className="flex items-center">
+                        <Building className="h-5 w-5 mr-3 text-[#18005F]" />
+                        <span className="font-medium text-gray-900">Organization</span>
+                      </div>
+                      {!organizationData.is_freelancer && (
+                        <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-[#18005F]" />
+                      )}
+                    </label>
+                    
+                    <label className={`relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      organizationData.is_freelancer 
+                        ? 'border-[#18005F] bg-[#18005F]/5' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <input
+                        type="radio"
+                        checked={organizationData.is_freelancer}
+                        onChange={() => setOrganizationData(prev => ({ ...prev, is_freelancer: true }))}
+                        className="sr-only"
+                      />
+                      <div className="flex items-center">
+                        <User className="h-5 w-5 mr-3 text-[#18005F]" />
+                        <span className="font-medium text-gray-900">Freelancer</span>
+                      </div>
+                      {organizationData.is_freelancer && (
+                        <CheckCircle className="absolute top-2 right-2 h-5 w-5 text-[#18005F]" />
+                      )}
+                    </label>
                   </div>
                 </div>
-              )
-            )}
-          </motion.div>
-        ) : (
-          // Organization profile view
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg mb-6 relative"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <Building className="w-5 h-5 mr-2 text-indigo-600" />
-                Organization Information
-              </h2>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setEditingOrgInfo(!editingOrgInfo);
-                  setUpdateError(null);
-                  setUpdateSuccess(false);
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-medium transition-colors bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-              >
-                {editingOrgInfo ? 'Cancel' : 'Edit'}
-              </motion.button>
-            </div>
 
-            {editingOrgInfo ? (
-              <form onSubmit={handleOrgInfoSubmit} className="space-y-6">
+                {/* Common Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Organization Name*</label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Designation *
+                    </label>
+                    <input
+                      type="text"
+                      name="designation"
+                      value={organizationData.designation}
+                      onChange={(e) => handleInputChange(e, 'organization')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
+                      required
+                    />
+                    {errors.designation && <p className="mt-1 text-sm text-red-600">{errors.designation}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City *
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={organizationData.city}
+                      onChange={(e) => handleInputChange(e, 'organization')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
+                      required
+                    />
+                    {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Industry *
+                    </label>
+                    <input
+                      type="text"
+                      name="industry"
+                      value={organizationData.industry}
+                      onChange={(e) => handleInputChange(e, 'organization')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
+                      required
+                    />
+                    {errors.industry && <p className="mt-1 text-sm text-red-600">{errors.industry}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of Employees *
+                    </label>
+                    <input
+                      type="number"
+                      name="no_of_employees"
+                      value={organizationData.no_of_employees}
+                      onChange={(e) => handleInputChange(e, 'organization')}
+                      min="1"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
+                      required
+                    />
+                    {errors.no_of_employees && <p className="mt-1 text-sm text-red-600">{errors.no_of_employees}</p>}
+                  </div>
+                </div>
+
+                {/* Organization-specific fields */}
+                {!organizationData.is_freelancer && (
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Organization Name *
+                      </label>
                       <input
                         type="text"
                         name="organization_name"
-                        value={orgInfoFormData.organization_name}
-                        onChange={handleOrgInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                        value={organizationData.organization_name}
+                        onChange={(e) => handleInputChange(e, 'organization')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
                         required
                       />
+                      {errors.organization_name && <p className="mt-1 text-sm text-red-600">{errors.organization_name}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Organization Description *
+                      </label>
+                      <textarea
+                        name="organization_description"
+                        value={organizationData.organization_description}
+                        onChange={(e) => handleInputChange(e, 'organization')}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] resize-none"
+                        required
+                      />
+                      {errors.organization_description && <p className="mt-1 text-sm text-red-600">{errors.organization_description}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Verification Method *
+                        </label>
+                        <select
+                          name="verification_method"
+                          value={organizationData.verification_method}
+                          onChange={(e) => handleInputChange(e, 'organization')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
+                          required
+                        >
+                          <option value="Email">Email</option>
+                          <option value="Phone">Phone</option>
+                          <option value="Document">Document</option>
+                        </select>
+                        {errors.verification_method && <p className="mt-1 text-sm text-red-600">{errors.verification_method}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Verification Value *
+                        </label>
+                        <input
+                          type={organizationData.verification_method === 'Email' ? 'email' : 'text'}
+                          name="verification_value"
+                          value={organizationData.verification_value}
+                          onChange={(e) => handleInputChange(e, 'organization')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
+                          placeholder={
+                            organizationData.verification_method === 'Email' ? 'hr@company.com' :
+                            organizationData.verification_method === 'Phone' ? '+1234567890' :
+                            'Document details'
+                          }
+                          required
+                        />
+                        {errors.verification_value && <p className="mt-1 text-sm text-red-600">{errors.verification_value}</p>}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Organization Logo
+                      </label>
+                      <div className="mt-2">
+                        {logoPreview ? (
+                          <div className="relative inline-block">
+                            <img 
+                              src={logoPreview} 
+                              alt="Logo preview" 
+                              className="h-24 w-24 rounded-xl object-cover border-2 border-gray-200 shadow-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={removeFile}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="cursor-pointer">
+                            <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-[#18005F] hover:bg-[#18005F]/5 transition-all">
+                              <Camera className="w-6 h-6 text-gray-400 mb-1" />
+                              <span className="text-xs text-gray-500">Upload</span>
+                            </div>
+                            <input
+                              type="file"
+                              onChange={handleFileChange}
+                              accept="image/*"
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                        {errors.organization_logo && <p className="mt-1 text-sm text-red-600">{errors.organization_logo}</p>}
+                      </div>
                     </div>
                   </div>
+                )}
+
+                {/* Freelancer-specific fields */}
+                {organizationData.is_freelancer && (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Your Designation*</label>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        type="text"
-                        name="designation"
-                        value={orgInfoFormData.designation}
-                        onChange={handleOrgInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Organization Description*</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      About Freelancer *
+                    </label>
                     <textarea
-                      name="organization_description"
-                      value={orgInfoFormData.organization_description}
-                      onChange={handleOrgInfoChange}
-                      rows={4}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      name="about_freelancer"
+                      value={organizationData.about_freelancer}
+                      onChange={(e) => handleInputChange(e, 'organization')}
+                      rows={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] resize-none"
+                      placeholder="Describe your skills, experience, and services you offer..."
                       required
                     />
+                    {errors.about_freelancer && <p className="mt-1 text-sm text-red-600">{errors.about_freelancer}</p>}
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Location*</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        type="text"
-                        name="city"
-                        value={orgInfoFormData.city}
-                        onChange={handleOrgInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Industry*</label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        type="text"
-                        name="industry"
-                        value={orgInfoFormData.industry}
-                        onChange={handleOrgInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Number of Employees*</label>
-                    <div className="relative">
-                      <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        type="number"
-                        name="no_of_employees"
-                        value={orgInfoFormData.no_of_employees}
-                        onChange={handleOrgInfoChange}
-                        min="1"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Verification Method*</label>
-                    <select
-                      name="verification_method"
-                      value={orgInfoFormData.verification_method}
-                      onChange={handleOrgInfoChange}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      required
-                    >
-                      <option value="Email">Email</option>
-                      <option value="Phone">Phone</option>
-                      <option value="Document">Document</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Verification Value*</label>
-                    <div className="relative">
-                      {orgInfoFormData.verification_method === 'Email' ? (
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      ) : orgInfoFormData.verification_method === 'Phone' ? (
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      ) : (
-                        <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      )}
-                      <input
-                        type={orgInfoFormData.verification_method === 'Email' ? 'email' : 'text'}
-                        name="verification_value"
-                        value={orgInfoFormData.verification_value}
-                        onChange={handleOrgInfoChange}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                        required
-                        placeholder={
-                          orgInfoFormData.verification_method === 'Email' ? 'hr@company.com' :
-                          orgInfoFormData.verification_method === 'Phone' ? '+1234567890' :
-                          'Document details'
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Organization Logo</label>
-                    <div className="mt-2 flex items-center gap-4">
-                      {logoPreview ? (
-                        <div className="relative">
-                          <img 
-                            src={logoPreview} 
-                            alt="Logo preview" 
-                            className="h-24 w-24 rounded-xl object-cover border-2 border-gray-200 shadow-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOrgInfoFormData(prev => ({ ...prev, organization_logo: null }));
-                              setLogoPreview(null);
-                            }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="cursor-pointer">
-                          <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-all">
-                            <Camera className="w-6 h-6 text-gray-400 mb-1" />
-                            <span className="text-xs text-gray-500">Upload</span>
-                          </div>
-                          <input
-                            type="file"
-                            onChange={handleOrgFileChange}
-                            accept="image/*"
-                            className="hidden"
-                          />
-                        </label>
-                      )}
-                      <div className="text-sm text-gray-500">
-                        <p>Recommended size: 400x400px</p>
-                        <p>Max file size: 5MB</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
 
-                <AnimatePresence>
-                  {updateError && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl"
-                    >
-                      <div className="flex items-center">
-                        <AlertCircle className="w-5 h-5 mr-2" />
-                        <p className="text-sm">{updateError}</p>
-                      </div>
-                    </motion.div>
-                  )}
+                {errors.general && (
+                  <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                    <div className="flex items-center">
+                      <AlertCircle className="w-5 h-5 mr-2" />
+                      <p className="text-sm">{errors.general}</p>
+                    </div>
+                  </div>
+                )}
 
-                  {updateSuccess && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl"
-                    >
-                      <div className="flex items-center">
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        <p className="text-sm">Organization information updated successfully!</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex justify-end space-x-4 mt-6">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                <div className="flex justify-end space-x-3">
+                  <button
                     type="button"
-                    onClick={() => {
-                      setEditingOrgInfo(false);
-                      setUpdateError(null);
-                      setUpdateSuccess(false);
-                    }}
-                    className="px-4 py-2 border-2 border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-all text-sm font-medium"
-                    disabled={updateLoading}
+                    onClick={() => setShowOrganizationForm(false)}
+                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  </button>
+                  <button
                     type="submit"
-                    className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all text-sm disabled:opacity-70"
-                    disabled={updateLoading}
+                    disabled={isSubmitting}
+                    className="flex items-center px-6 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors disabled:opacity-50"
                   >
-                    {updateLoading ? (
-                      <div className="flex items-center">
-                        <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Saving...
-                      </div>
+                      </>
                     ) : (
-                      <div className="flex items-center">
+                      <>
                         <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </div>
+                        Save Profile
+                      </>
                     )}
-                  </motion.button>
+                  </button>
                 </div>
               </form>
-            ) : (
-              profile.employer_profile && (
-                <div className="space-y-6">
-                  {profile.employer_profile.organization_logo_url && (
-                    <div className="flex justify-center mb-6">
-                      <img 
-                        src={profile.employer_profile.organization_logo_url} 
-                        alt="Organization Logo" 
-                        className="h-32 w-32 object-contain bg-white p-2 rounded-xl shadow-md"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Organization Name</p>
-                      <p className="font-semibold text-gray-900">{profile.employer_profile.organization_name}</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Designation</p>
-                      <p className="font-semibold text-gray-900">{profile.employer_profile.designation}</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Location</p>
-                      <p className="font-semibold text-gray-900">{profile.employer_profile.city}</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Industry</p>
-                      <p className="font-semibold text-gray-900">{profile.employer_profile.industry}</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Employees</p>
-                      <p className="font-semibold text-gray-900">{profile.employer_profile.no_of_employees}</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Verification</p>
-                      <p className="font-semibold text-gray-900">
-                        {profile.employer_profile.verification_method}: {profile.employer_profile.verification_value}
-                      </p>
-                    </div>
-                    <div className="md:col-span-3 bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-500 mb-1">Description</p>
-                      <p className="font-semibold text-gray-900">{profile.employer_profile.organization_description}</p>
-                    </div>
-                  </div>
-                </div>
-              )
-            )}
+            </motion.div>
           </motion.div>
         )}
-
-        {/* Quick Actions Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg"
-        >
-          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-            <Briefcase className="w-5 h-5 mr-2 text-indigo-600" />
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <motion.button
-              whileHover={{ scale: 1.03, y: -5 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/post-job')}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3">
-                  <Briefcase className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-semibold mb-1">Post a Job</h3>
-                <p className="text-sm text-white/80">Create a new job listing</p>
-              </div>
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.03, y: -5 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/post-internship')}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3">
-                  <Users className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-semibold mb-1">Post an Internship</h3>
-                <p className="text-sm text-white/80">Create a new internship opportunity</p>
-              </div>
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.03, y: -5 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/dashboard/employer')}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 text-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3">
-                  <Building className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-semibold mb-1">Dashboard</h3>
-                <p className="text-sm text-white/80">View your dashboard</p>
-              </div>
-            </motion.button>
-          </div>
-        </motion.div>
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
 
-export default EmployerDashboard;
+export default EmployerProfile;
