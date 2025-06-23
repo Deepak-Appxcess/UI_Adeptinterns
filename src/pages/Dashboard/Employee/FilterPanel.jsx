@@ -279,4 +279,4 @@ const FilterPanel = ({ type, onFilterChange }) => {
   );
 };
 
-export default FilterPanel;
+export default FilterPanel; 

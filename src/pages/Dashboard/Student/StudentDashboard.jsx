@@ -1,15 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  User, 
+  BriefcaseIcon, 
+  BookOpen, 
+  TrendingUp, 
+  Eye,
+  Heart,
+  FileText,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ChevronRight,
+  Zap,
+  Activity,
+  Calendar
+} from 'lucide-react';
 import api from '../../../services/api';
-import { fetchRecentActivity } from '../../../services/api'; // Add this import
+import { fetchRecentActivity } from '../../../services/api';
 
 const StudentDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [completingProfile, setCompletingProfile] = useState(false);
-   const [recentActivity, setRecentActivity] = useState([]); // Add this state
-  const [activityLoading, setActivityLoading] = useState(false); // Add this state
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const navigate = useNavigate();
 
   // Fetch profile data
@@ -51,7 +67,7 @@ const StudentDashboard = () => {
     }
   };
 
-   useEffect(() => {
+  useEffect(() => {
     const fetchActivity = async () => {
       setActivityLoading(true);
       try {
@@ -70,16 +86,23 @@ const StudentDashboard = () => {
   // Loading and error states
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#18005F] mx-auto"></div>
+          <p className="mt-4 text-sm font-medium text-gray-600">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-red-500">{error}</div>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+          <p className="text-gray-600">{error}</p>
+        </div>
       </div>
     );
   }
@@ -89,14 +112,15 @@ const StudentDashboard = () => {
   }
 
   // Button with loader component
-  const ButtonWithLoader = ({ loading, children, ...props }) => (
-    <button {...props} disabled={loading}>
+  const ButtonWithLoader = ({ loading, children, className = "", ...props }) => (
+    <button 
+      {...props} 
+      disabled={loading}
+      className={`${className} ${loading ? 'opacity-90 cursor-not-allowed' : ''}`}
+    >
       {loading ? (
         <span className="flex items-center justify-center">
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
           Processing...
         </span>
       ) : children}
@@ -104,40 +128,47 @@ const StudentDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Professional attention message if profile is incomplete */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Professional attention banner for incomplete profile */}
       {(!profile.has_completed_bio || !profile.has_completed_preferences) && (
-        <div className="fixed top-0 left-0 right-0 bg-blue-50 border-b border-blue-200 p-4 z-50 shadow-sm">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-2 md:mb-0">
-              <svg className="w-5 h-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
-              </svg>
-              <div>
-                <span className="font-semibold text-blue-800">Profile Incomplete:</span>
-                <span className="ml-2 text-blue-700">
-                  Your profile is currently hidden from employers. Complete your profile to increase your visibility.
-                </span>
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+              <div className="flex items-start mb-3 md:mb-0">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <h4 className="text-sm font-semibold text-amber-900">Complete Your Profile</h4>
+                  <p className="text-sm text-amber-800 mt-1">
+                    Your profile is currently hidden from employers. Complete your profile to increase visibility and unlock opportunities.
+                  </p>
+                </div>
               </div>
+              <ButtonWithLoader
+                onClick={handleCompleteNow}
+                loading={completingProfile}
+                className="bg-[#18005F] hover:bg-[#140047] text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center whitespace-nowrap"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Complete Now
+              </ButtonWithLoader>
             </div>
-            <ButtonWithLoader
-              onClick={handleCompleteNow}
-              loading={completingProfile}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 shadow-sm disabled:opacity-75 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Complete Profile
-            </ButtonWithLoader>
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto pt-16">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-          <div className="text-sm text-gray-500">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+            <p className="text-gray-600">Welcome back, {profile.first_name}. Here's your career overview.</p>
+          </div>
+          <div className="flex items-center text-sm text-gray-500 mt-4 md:mt-0">
+            <Calendar className="w-4 h-4 mr-2" />
             Last updated: {new Date().toLocaleDateString('en-US', { 
               year: 'numeric', 
               month: 'long', 
@@ -146,143 +177,217 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Welcome Card */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg text-white p-6 mb-6">
-          <h2 className="text-2xl font-bold mb-2">Welcome back, {profile.first_name}!</h2>
-          <p className="opacity-90 mb-4">Ready to find your next opportunity? Here's what's new for you.</p>
-          <div className="flex space-x-4">
-            <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-medium">
-              {profile.has_completed_bio && profile.has_completed_preferences ? 'Profile Complete' : 'Profile Incomplete'}
-            </span>
-            <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-medium">
-              {profile.candidate_profile?.preferences?.currently_looking_for || 'Not specified'}
-            </span>
+        {/* Hero Welcome Card */}
+        <div className="relative bg-gradient-to-br from-[#18005F] via-[#220066] to-[#2a0077] rounded-2xl shadow-xl text-white p-8 mb-8 overflow-hidden">
+          <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold mb-3">Ready to advance your career?</h2>
+                <p className="text-white/90 mb-6 text-lg">
+                  Discover opportunities that match your skills and aspirations.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center">
+                    {profile.has_completed_bio && profile.has_completed_preferences ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Profile Complete
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-4 h-4 mr-2" />
+                        Profile Incomplete
+                      </>
+                    )}
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium">
+                    {profile.candidate_profile?.preferences?.currently_looking_for || 'Career Focus: Not Set'}
+                  </div>
+                </div>
+              </div>
+              <div className="hidden lg:block">
+                <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <TrendingUp className="w-12 h-12 text-white/80" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-gray-500 text-sm font-medium">Jobs Applied</h3>
-            <p className="text-2xl font-bold mt-1">0</p>
-            <p className="text-gray-500 text-xs mt-2">No applications yet</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Applications Sent</p>
+                <p className="text-3xl font-bold text-gray-900">0</p>
+                <p className="text-xs text-gray-500 mt-2">Ready to apply?</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
           </div>
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-gray-500 text-sm font-medium">Saved Jobs</h3>
-            <p className="text-2xl font-bold mt-1">0</p>
-            <p className="text-gray-500 text-xs mt-2">No saved jobs</p>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Saved Opportunities</p>
+                <p className="text-3xl font-bold text-gray-900">0</p>
+                <p className="text-xs text-gray-500 mt-2">Save jobs you love</p>
+              </div>
+              <div className="w-12 h-12 bg-pink-50 rounded-lg flex items-center justify-center">
+                <Heart className="w-6 h-6 text-pink-600" />
+              </div>
+            </div>
           </div>
-          <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-gray-500 text-sm font-medium">Profile Views</h3>
-            <p className="text-2xl font-bold mt-1">0</p>
-            <p className="text-gray-500 text-xs mt-2">
-              {profile.has_completed_bio && profile.has_completed_preferences 
-                ? 'Visible to employers' 
-                : 'Not visible to employers'}
-            </p>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Profile Views</p>
+                <p className="text-3xl font-bold text-gray-900">0</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {profile.has_completed_bio && profile.has_completed_preferences 
+                    ? 'Visible to employers' 
+                    : 'Complete profile to be visible'}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                <Eye className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
+            <p className="text-sm text-gray-500">Start your career journey</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button 
-              className="bg-purple-100 hover:bg-purple-200 text-purple-800 p-4 rounded-lg transition-colors duration-150 flex items-center justify-center"
+              className="group bg-gradient-to-br from-[#18005F] to-[#220066] hover:from-[#140047] hover:to-[#1a0052] text-white p-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
               onClick={() => navigate('/jobs')}
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Browse Jobs
+              <div className="flex items-center justify-between mb-4">
+                <BriefcaseIcon className="w-8 h-8" />
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Browse Jobs</h3>
+              <p className="text-white/80 text-sm">Discover full-time opportunities</p>
             </button>
+
             <button 
-              className="bg-blue-100 hover:bg-blue-200 text-blue-800 p-4 rounded-lg transition-colors duration-150 flex items-center justify-center"
+              className="group bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
               onClick={() => navigate('/internships')}
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-              Find Internships
+              <div className="flex items-center justify-between mb-4">
+                <BookOpen className="w-8 h-8" />
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Find Internships</h3>
+              <p className="text-white/80 text-sm">Gain valuable experience</p>
             </button>
+
             <button 
-              className="bg-green-100 hover:bg-green-200 text-green-800 p-4 rounded-lg transition-colors duration-150 flex items-center justify-center"
+              className="group bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
               onClick={() => navigate('/profile')}
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              View Profile
+              <div className="flex items-center justify-between mb-4">
+                <User className="w-8 h-8" />
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Manage Profile</h3>
+              <p className="text-white/80 text-sm">Update your information</p>
             </button>
           </div>
         </div>
 
         {/* Recent Activity */}
-         <div className="bg-white shadow rounded-lg p-6">
-    <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-    {activityLoading ? (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
-      </div>
-    ) : recentActivity.length > 0 ? (
-      <ul className="divide-y divide-gray-200">
-        {recentActivity.map((activity) => (
-          <li key={activity.id} className="py-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0">
-                {activity.activity_type === 'JOB_APPLIED' ? (
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
-                    <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {activity.details}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {new Date(activity.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-              <div>
-                <button 
-                  onClick={() => navigate(`/job/${activity.related_id}`)}
-                  className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  View
-                </button>
-              </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <Activity className="w-5 h-5 mr-2 text-[#18005F]" />
+              Recent Activity
+            </h2>
+            {recentActivity.length > 0 && (
+              <button className="text-[#18005F] hover:text-[#140047] text-sm font-medium">
+                View All
+              </button>
+            )}
+          </div>
+
+          {activityLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-[#18005F] mb-4"></div>
+              <p className="text-sm text-gray-500">Loading your activity...</p>
             </div>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <div className="text-center py-8">
-        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No activity yet</h3>
-        <p className="mt-1 text-sm text-gray-500">Your job applications and profile views will appear here.</p>
+          ) : recentActivity.length > 0 ? (
+            <div className="space-y-4">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      {activity.activity_type === 'JOB_APPLIED' ? (
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <BriefcaseIcon className="w-5 h-5 text-blue-600" />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#18005F]/10 flex items-center justify-center">
+                          <Clock className="w-5 h-5 text-[#18005F]" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {activity.details}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(activity.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => navigate(`/job/${activity.related_id}`)}
+                    className="inline-flex items-center px-4 py-2 bg-[#18005F] hover:bg-[#140047] text-white text-xs font-medium rounded-lg transition-colors duration-150"
+                  >
+                    View
+                    <ChevronRight className="w-3 h-3 ml-1" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Activity className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
+              <p className="text-gray-500 mb-6">
+                Your job applications, profile views, and other activities will appear here.
+              </p>
+              <button 
+                onClick={() => navigate('/jobs')}
+                className="inline-flex items-center px-6 py-3 bg-[#18005F] hover:bg-[#140047] text-white font-medium rounded-lg transition-colors duration-150"
+              >
+                <BriefcaseIcon className="w-4 h-4 mr-2" />
+                Start Browsing Jobs
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    )}
-  </div>
-      </div> 
     </div>   
   );
 };
-export default StudentDashboard;      
-    
+
+export default StudentDashboard;

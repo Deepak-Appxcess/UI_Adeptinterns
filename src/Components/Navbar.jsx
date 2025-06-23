@@ -152,12 +152,7 @@ function Navbar({ isDarkMode, toggleTheme }) {
         
         <div className="flex items-center gap-4">
           {/* Theme Toggle */}
-          <button 
-            onClick={toggleTheme}
-            className={`p-2 rounded-full ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'} transition-colors`}
-          >
-            {isDarkMode ? '☀️' : '🌙'}
-          </button>
+         
           
           {/* Auth Section */}
           <div className="flex items-center gap-2">

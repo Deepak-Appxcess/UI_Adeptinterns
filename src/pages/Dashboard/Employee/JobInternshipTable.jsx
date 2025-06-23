@@ -14,13 +14,12 @@ import {
   Calendar,
   Briefcase,
   GraduationCap,
-  Star,
-  TrendingUp,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Filter,
-  Search
+  Search,
+  Zap,
+  ChevronRight
 } from 'lucide-react';
 
 const JobInternshipTable = ({ data, type }) => {
@@ -45,13 +44,14 @@ const JobInternshipTable = ({ data, type }) => {
       navigate(`/employer/internships/update/${id}`);
     }
   };
-const handleApplication = (id, type) => {
-  if (type === 'JOB') {
-    navigate(`/applications/job/${id}`);
-  } else {
-    navigate(`/applications/internship/${id}`);
-  }
-};
+
+  const handleApplication = (id, type) => {
+    if (type === 'JOB') {
+      navigate(`/applications/job/${id}`);
+    } else {
+      navigate(`/applications/internship/${id}`);
+    }
+  };
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -156,8 +156,9 @@ const handleApplication = (id, type) => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate(type === 'JOB' ? '/post-job' : '/post-internship')}
-          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#18005F] to-[#220066] text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all"
         >
+          <Zap className="w-4 h-4 mr-2" />
           Post Your First {type === 'JOB' ? 'Job' : 'Internship'}
         </motion.button>
       </motion.div>
@@ -175,7 +176,7 @@ const handleApplication = (id, type) => {
             placeholder={`Search ${type === 'JOB' ? 'jobs' : 'internships'}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-4 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm"
           />
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -184,7 +185,7 @@ const handleApplication = (id, type) => {
       </div>
 
       {/* Table Container */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -215,7 +216,7 @@ const handleApplication = (id, type) => {
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                 Application
+                  Applications
                 </th>
                 <th className="px-6 py-4 text-left">
                   <button
@@ -248,7 +249,7 @@ const handleApplication = (id, type) => {
                       <td className="px-6 py-4">
                         <div className="flex items-start space-x-3">
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#18005F] to-[#220066] rounded-lg flex items-center justify-center">
                               {type === 'JOB' ? (
                                 <Briefcase className="w-5 h-5 text-white" />
                               ) : (
@@ -268,7 +269,7 @@ const handleApplication = (id, type) => {
                                 {item.skills_required.slice(0, 3).map((skill, idx) => (
                                   <span
                                     key={idx}
-                                    className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700"
+                                    className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-[#18005F]/10 text-[#18005F]"
                                   >
                                     {skill}
                                   </span>
@@ -334,20 +335,19 @@ const handleApplication = (id, type) => {
                         </span>
                       </td>
 
-                      {/* {application count} */}
+                      {/* Application Count */}
                       <td className="px-6 py-4">
                         <div className="flex items-center text-sm text-gray-600">
-                         
-                          <span>{item.applications_count || 0} application{item.application_count !== 1 ? 's' : ''}</span>
-                           <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleApplication(item.id,type)}
-                              className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                              title="Edit"
-                            >
-                             <Users className="w-4 h-4 mr-2 text-gray-400" />
-                            </motion.button>
+                          <span>{item.applications_count || 0} application{item.applications_count !== 1 ? 's' : ''}</span>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleApplication(item.id, type)}
+                            className="p-2 text-gray-400 hover:text-[#18005F] hover:bg-[#18005F]/10 rounded-lg transition-all ml-2"
+                            title="View Applications"
+                          >
+                            <Users className="w-4 h-4" />
+                          </motion.button>
                         </div>  
                       </td>
 
@@ -366,7 +366,7 @@ const handleApplication = (id, type) => {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => toggleRow(item.id)}
-                            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                            className="p-2 text-gray-400 hover:text-[#18005F] hover:bg-[#18005F]/10 rounded-lg transition-all"
                             title="View Details"
                           >
                             <Eye className="w-4 h-4" />
@@ -406,7 +406,7 @@ const handleApplication = (id, type) => {
                           transition={{ duration: 0.3 }}
                           className="bg-gray-50"
                         >
-                          <td colSpan={5} className="px-6 py-6">
+                          <td colSpan={6} className="px-6 py-6">
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                               {/* Left Column */}
                               <div className="space-y-4">
@@ -417,7 +417,7 @@ const handleApplication = (id, type) => {
                                   <div className="text-sm text-gray-600 space-y-1">
                                     {(type === 'JOB' ? item.job_description : item.responsibilities)?.map((desc, idx) => (
                                       <p key={idx} className="flex items-start">
-                                        <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                                        <span className="w-1.5 h-1.5 bg-[#18005F] rounded-full mt-2 mr-2 flex-shrink-0"></span>
                                         {desc}
                                       </p>
                                     )) || <p>No description available</p>}
@@ -518,7 +518,7 @@ const handleApplication = (id, type) => {
           <select
             value={sortConfig.key || ''}
             onChange={(e) => handleSort(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            className="border border-gray-200 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F]"
           >
             <option value="">Default</option>
             <option value="created_at">Date Created</option>

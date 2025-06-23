@@ -25,7 +25,10 @@ import {
   ArrowUpRight,
   Target,
   Award,
-  Activity
+  Activity,
+  Loader2,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 import api from '../../../services/api';
 import JobInternshipTable from './JobInternshipTable';
@@ -167,17 +170,17 @@ const EmployerDashboard = () => {
     navigate(activeTab === 'JOB' ? '/post-job' : '/post-internship');
   };
 
-  // Prepare chart data with modern styling
+  // Prepare chart data with consistent theme styling
   const statusBreakdownData = {
     labels: analytics?.application_status_breakdown?.map(item => item.status.replace('_', ' ')) || [],
     datasets: [{
       data: analytics?.application_status_breakdown?.map(item => item.count) || [],
       backgroundColor: [
-        '#6366f1', // indigo
-        '#10b981', // emerald
-        '#f59e0b', // amber
-        '#ef4444', // red
-        '#8b5cf6'  // violet
+        '#18005F', // primary purple
+        '#4F46E5', // indigo
+        '#8B5CF6', // violet
+        '#A78BFA', // lighter purple
+        '#C4B5FD'  // lightest purple
       ],
       borderWidth: 0,
       hoverOffset: 8
@@ -189,8 +192,8 @@ const EmployerDashboard = () => {
     datasets: [{
       label: 'Applications',
       data: analytics?.top_jobs_by_applications?.slice(0, 5).map(job => job.applications_count) || [],
-      backgroundColor: 'rgba(99, 102, 241, 0.8)',
-      borderColor: '#6366f1',
+      backgroundColor: 'rgba(24, 0, 95, 0.8)',
+      borderColor: '#18005F',
       borderWidth: 2,
       borderRadius: 8,
       borderSkipped: false,
@@ -202,11 +205,11 @@ const EmployerDashboard = () => {
     datasets: [{
       label: 'Applications',
       data: analytics?.application_trend ? Object.values(analytics.application_trend) : [],
-      borderColor: '#6366f1',
-      backgroundColor: 'rgba(99, 102, 241, 0.1)',
+      borderColor: '#18005F',
+      backgroundColor: 'rgba(24, 0, 95, 0.1)',
       tension: 0.4,
       fill: true,
-      pointBackgroundColor: '#6366f1',
+      pointBackgroundColor: '#18005F',
       pointBorderColor: '#ffffff',
       pointBorderWidth: 2,
       pointRadius: 6,
@@ -233,7 +236,7 @@ const EmployerDashboard = () => {
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         titleColor: '#ffffff',
         bodyColor: '#ffffff',
-        borderColor: '#6366f1',
+        borderColor: '#18005F',
         borderWidth: 1,
         cornerRadius: 8,
         padding: 12
@@ -243,28 +246,27 @@ const EmployerDashboard = () => {
 
   if (loading && !profile) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-indigo-50 to-white">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full"
-        />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <Loader2 className="w-6 h-6 animate-spin text-[#18005F]" />
+          <span className="text-gray-600">Loading dashboard...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-red-50 to-white">
-        <div className="text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-md text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="px-6 py-3 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
           >
             Try Again
           </button>
@@ -274,44 +276,40 @@ const EmployerDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50">
-      {/* Modern Header */}
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white/80 backdrop-blur-lg border-b border-white/20 sticky top-0 z-40"
-      >
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Dashboard
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900">Employer Dashboard</h1>
               <p className="text-gray-600 mt-1">Welcome back, {profile?.first_name}!</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handlePostNew}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+              className="flex items-center px-6 py-3 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-md"
             >
               <Plus className="w-5 h-5 mr-2" />
               Post New {activeTab === 'JOB' ? 'Job' : 'Internship'}
             </motion.button>
           </div>
         </div>
-      </motion.header>
+      </div>
 
-      
-        {/* Job/Internship Management Section */}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+
+                {/* Job/Internship Management Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg"
+          className="bg-white rounded-xl border border-gray-200 shadow-sm"
         >
           {/* Header with Tabs */}
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h2 className="text-xl font-semibold text-gray-900">Manage Opportunities</h2>
               
@@ -324,7 +322,7 @@ const EmployerDashboard = () => {
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-all text-sm"
                   />
                 </div>
                 <motion.button
@@ -333,7 +331,7 @@ const EmployerDashboard = () => {
                   onClick={() => setShowFilters(!showFilters)}
                   className={`p-2 rounded-lg border transition-all ${
                     showFilters 
-                      ? 'bg-indigo-50 border-indigo-200 text-indigo-600' 
+                      ? 'bg-[#18005F]/10 border-[#18005F]/20 text-[#18005F]' 
                       : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -355,14 +353,14 @@ const EmployerDashboard = () => {
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex-1 py-3 px-4 rounded-md font-medium text-sm transition-all ${
                     activeTab === tab.key
-                      ? 'bg-white text-indigo-600 shadow-sm'
+                      ? 'bg-white text-[#18005F] shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   {tab.label}
                   <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
                     activeTab === tab.key
-                      ? 'bg-indigo-100 text-indigo-600'
+                      ? 'bg-[#18005F]/10 text-[#18005F]'
                       : 'bg-gray-200 text-gray-600'
                   }`}>
                     {tab.count}
@@ -380,7 +378,7 @@ const EmployerDashboard = () => {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className="border-b border-gray-100"
+                className="border-b border-gray-200"
               >
                 <FilterPanel 
                   type={activeTab} 
@@ -394,11 +392,7 @@ const EmployerDashboard = () => {
           <div className="p-6">
             {loading ? (
               <div className="flex justify-center items-center py-12">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full"
-                />
+                <Loader2 className="w-8 h-8 animate-spin text-[#18005F]" />
               </div>
             ) : error ? (
               <div className="text-red-500 text-center py-6">{error}</div>
@@ -415,11 +409,6 @@ const EmployerDashboard = () => {
             )}
           </div>
         </motion.div>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        
-
         {/* Quick Stats Cards */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -432,32 +421,32 @@ const EmployerDashboard = () => {
               title: 'Total Jobs',
               value: analytics?.total_jobs_posted || 0,
               icon: Briefcase,
-              color: 'from-blue-500 to-blue-600',
-              bgColor: 'bg-blue-50',
+              color: 'text-[#18005F]',
+              bgColor: 'bg-[#18005F]/10',
               change: '+12%'
             },
             {
               title: 'Total Internships',
               value: analytics?.total_internships_posted || 0,
               icon: Users,
-              color: 'from-emerald-500 to-emerald-600',
-              bgColor: 'bg-emerald-50',
+              color: 'text-[#18005F]',
+              bgColor: 'bg-[#18005F]/10',
               change: '+8%'
             },
             {
               title: 'Applications',
               value: analytics?.total_applications || 0,
               icon: TrendingUp,
-              color: 'from-purple-500 to-purple-600',
-              bgColor: 'bg-purple-50',
+              color: 'text-[#18005F]',
+              bgColor: 'bg-[#18005F]/10',
               change: '+24%'
             },
             {
               title: 'Success Rate',
               value: '78%',
               icon: Target,
-              color: 'from-amber-500 to-amber-600',
-              bgColor: 'bg-amber-50',
+              color: 'text-[#18005F]',
+              bgColor: 'bg-[#18005F]/10',
               change: '+5%'
             }
           ].map((stat, index) => (
@@ -467,7 +456,7 @@ const EmployerDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + index * 0.1 }}
               whileHover={{ y: -4 }}
-              className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all"
+              className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-all"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -479,7 +468,7 @@ const EmployerDashboard = () => {
                   </div>
                 </div>
                 <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
-                  <stat.icon className={`w-6 h-6 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`} />
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
               </div>
             </motion.div>
@@ -491,11 +480,11 @@ const EmployerDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg mb-8"
+          className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
+              <Calendar className="w-5 h-5 mr-2 text-[#18005F]" />
               Analytics Period
             </h2>
           </div>
@@ -505,7 +494,7 @@ const EmployerDashboard = () => {
             endDate={dateRange.endDate}
             onChange={handleDateChange}
             maxDate={new Date()}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] transition-colors"
             isClearable={true}
             placeholderText="Select date range (optional)"
           />
@@ -523,9 +512,9 @@ const EmployerDashboard = () => {
             className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
           >
             {/* Application Status Breakdown */}
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Activity className="w-5 h-5 mr-2 text-indigo-600" />
+                <Activity className="w-5 h-5 mr-2 text-[#18005F]" />
                 Application Status
               </h3>
               <div className="h-64">
@@ -534,9 +523,9 @@ const EmployerDashboard = () => {
             </div>
 
             {/* Top Jobs by Applications */}
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <Award className="w-5 h-5 mr-2 text-indigo-600" />
+                <Award className="w-5 h-5 mr-2 text-[#18005F]" />
                 Top Performing Jobs
               </h3>
               <div className="h-64">
@@ -545,9 +534,9 @@ const EmployerDashboard = () => {
             </div>
 
             {/* Application Trend */}
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg lg:col-span-2">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 lg:col-span-2">
               <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />
+                <TrendingUp className="w-5 h-5 mr-2 text-[#18005F]" />
                 Application Trends
               </h3>
               <div className="h-64">
@@ -563,10 +552,10 @@ const EmployerDashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg mb-8"
+            className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Star className="w-5 h-5 mr-2 text-indigo-600" />
+              <Star className="w-5 h-5 mr-2 text-[#18005F]" />
               Popular Candidate Skills
             </h3>
             <div className="flex flex-wrap gap-3">
@@ -576,7 +565,7 @@ const EmployerDashboard = () => {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 * index }}
-                  className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200"
+                  className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-[#18005F]/10 text-[#18005F] border border-[#18005F]/20"
                 >
                   {skill}
                 </motion.span>
@@ -585,7 +574,8 @@ const EmployerDashboard = () => {
           </motion.div>
         )}
 
-      </main>
+      
+      </div>
     </div>
   );
 };
