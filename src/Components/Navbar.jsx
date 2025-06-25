@@ -134,9 +134,9 @@ function Navbar({ isDarkMode, toggleTheme }) {
         {/* Logo Section */}
         <Link to="/" className={`flex items-center space-x-3 text-lg md:text-xl font-bold ${isDarkMode ? 'text-black' : 'text-white'}`}>
           {/* Website Logo */}
-          <div className="w-8 h-8 bg-[#18005F] rounded-full flex items-center justify-center">
+          {/* <div className="w-8 h-8 bg-[#18005F] rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
-          </div>
+          </div> */}
           <span>ADEPTINTERNS</span>
         </Link>
         

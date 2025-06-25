@@ -4,24 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 const projects = [
   {
     title: '📚 Courses',
-    description: 'Master in-demand skills through industry-curated courses in AI, Web Development, Cybersecurity, and more.',
-    link: '/images/courses.png', // Replace with actual course image path
-     color: '#5196fd', // Light blue
+    link: '/images/add1.png', // Replace with actual course image path
+    color: '#4e6fb1d1', // Light blue
   },
   {
     title: '💼 Jobs',
-    description: 'Explore job opportunities with top companies, from startups to MNCs, tailored to your tech skillset.',
-    link: '/images/jobs.png', // Replace with actual job image path
-      color: '#8f89ff', // Light purple
+    link: '/images/add2.png', // Replace with actual job image path
+    color: '#18005fc9', // Light purple
   },
   {
     title: '🧑‍💻 Internships',
-    description: 'Get hands-on experience with internships that bridge the gap between learning and industry practice.',
-    link: '/images/internships.png', // Replace with actual internship image path
-   color: '#13006c', // Light green
+    link: './images/Internships.png', // Replace with actual internship image path
+    color: '#14b1efa8', // Light green
   }
 ];
-
 
 export default function StackingCard({ isDarkMode }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -36,7 +32,6 @@ export default function StackingCard({ isDarkMode }) {
 
   return (
     <div className="relative w-full h-full">
-
       {projects.map((project, index) => {
         const zIndex = index === activeIndex ? projects.length : projects.length - index;
         const isActive = index === activeIndex;
@@ -54,22 +49,13 @@ export default function StackingCard({ isDarkMode }) {
                   zIndex,
                   backgroundColor: project.color,
                 }}
-                className="absolute inset-0 mx-auto w-full h-full rounded-xl md:rounded-[48px] shadow-xl p-4 md:p-8 flex flex-col md:flex-row gap-4 md:gap-8"
+                className="absolute inset-0 mx-auto w-full h-full rounded-xl md:rounded-[48px] shadow-xl overflow-hidden"
               >
-                {/* Content - Left Side (First Half) */}
-                <div className="w-full md:w-1/2 flex flex-col justify-center text-white p-4 md:p-8">
-                  <h2 className="text-2xl md:text-4xl font-bold mb-4">{project.title}</h2>
-                  <p className="text-base md:text-lg opacity-90">{project.description}</p>
-                </div>
-                
-                {/* Image - Right Side (Second Half) */}
-                <div className="w-full md:w-1/2 h-64 md:h-full rounded-lg md:rounded-2xl overflow-hidden shadow-lg">
-                  <img
-                    src={project.link}
-                    alt={project.title}
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
+                <img
+                  src={project.link}
+                  alt={project.title}
+                  className="w-full h-full object-cover object-center"
+                />
               </motion.div>
             )}
           </AnimatePresence>

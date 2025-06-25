@@ -1,37 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchApplicationDetails, updateApplicationStatus } from '../../../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Box,
-  Typography,
-  CircularProgress,
-  Alert,
-  Paper,
-  Chip,
-  Button,
-  Avatar,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle
-} from '@mui/material';
-import { ArrowBack, Edit, CheckCircle, Cancel } from '@mui/icons-material';
+  ArrowLeft,
+  Edit2,
+  CheckCircle2,
+  X,
+  Briefcase,
+  GraduationCap,
+  Code2,
+  Award,
+  Link2,
+  BookOpen,
+  Trophy,
+  User,
+  Mail,
+  MapPin,
+  Calendar,
+  Clock,
+  ChevronDown
+} from 'lucide-react';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
+// Register ChartJS components
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const statusOptions = [
-  { value: 'APPLIED', label: 'Applied' },
-  { value: 'UNDER_REVIEW', label: 'Under Review' },
-  { value: 'SHORTLISTED', label: 'Shortlisted' },
-  { value: 'REJECTED', label: 'Rejected' },
-  { value: 'ACCEPTED', label: 'Accepted' }
+  { value: 'APPLIED', label: 'Applied', color: 'bg-gray-400' },
+  { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-blue-500' },
+  { value: 'SHORTLISTED', label: 'Shortlisted', color: 'bg-purple-500' },
+  { value: 'REJECTED', label: 'Rejected', color: 'bg-red-500' },
+  { value: 'ACCEPTED', label: 'Accepted', color: 'bg-green-500' }
 ];
 
 const ApplicationDetailPage = () => {
@@ -87,21 +90,18 @@ const ApplicationDetailPage = () => {
   };
 
   const getStatusColor = (status) => {
-    if (!status) return 'default';
-    switch (status) {
-      case 'APPLIED': return 'default';
-      case 'UNDER_REVIEW': return 'info';
-      case 'SHORTLISTED': return 'primary';
-      case 'REJECTED': return 'error';
-      case 'ACCEPTED': return 'success';
-      default: return 'default';
-    }
+    const option = statusOptions.find(opt => opt.value === status);
+    return option ? option.color : 'bg-gray-400';
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
-      return new Date(dateString).toLocaleDateString();
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
     } catch {
       return 'Invalid date';
     }
@@ -119,19 +119,20 @@ const ApplicationDetailPage = () => {
     
     const profiles = [];
     const profileFields = [
-      { key: 'leetcode_url', label: 'LeetCode' },
-      { key: 'hackerrank_url', label: 'HackerRank' },
-      { key: 'codeforces_url', label: 'Codeforces' },
-      { key: 'codechef_url', label: 'CodeChef' },
-      { key: 'linkedin_url', label: 'LinkedIn' },
-      { key: 'github_url', label: 'GitHub' }
+      { key: 'leetcode_url', label: 'LeetCode', icon: Code2 },
+      { key: 'hackerrank_url', label: 'HackerRank', icon: Code2 },
+      { key: 'codeforces_url', label: 'Codeforces', icon: Code2 },
+      { key: 'codechef_url', label: 'CodeChef', icon: Code2 },
+      { key: 'linkedin_url', label: 'LinkedIn', icon: Link2 },
+      { key: 'github_url', label: 'GitHub', icon: Code2 }
     ];
 
-    profileFields.forEach(({ key, label }) => {
+    profileFields.forEach(({ key, label, icon: Icon }) => {
       if (application.online_profiles[key]) {
         profiles.push({
           platform: label,
-          url: application.online_profiles[key]
+          url: application.online_profiles[key],
+          Icon
         });
       }
     });
@@ -140,24 +141,35 @@ const ApplicationDetailPage = () => {
 
     return (
       <>
-        <Divider sx={{ my: 3 }} />
-        <Typography variant="h6" gutterBottom>
+        <div className="border-t border-gray-200 my-6" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Link2 className="w-5 h-5 mr-2 text-[#18005F]" />
           Online Profiles
-        </Typography>
-        <List>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {profiles.map((profile, index) => (
-            <ListItem key={index}>
-              <ListItemText
-                primary={profile.platform}
-                secondary={
-                  <Link href={profile.url} target="_blank" rel="noopener">
-                    {profile.url}
-                  </Link>
-                }
-              />
-            </ListItem>
+            <motion.div
+              key={index}
+              whileHover={{ y: -2 }}
+              className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow"
+            >
+              <div className={`w-10 h-10 ${getStatusColor()} rounded-lg flex items-center justify-center mr-3`}>
+                <profile.Icon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">{profile.platform}</p>
+                <a 
+                  href={profile.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#18005F] text-sm hover:underline"
+                >
+                  {profile.url.length > 30 ? `${profile.url.substring(0, 30)}...` : profile.url}
+                </a>
+              </div>
+            </motion.div>
           ))}
-        </List>
+        </div>
       </>
     );
   };
@@ -166,27 +178,39 @@ const ApplicationDetailPage = () => {
     if (!application?.resume?.education?.length) return null;
     
     return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <GraduationCap className="w-5 h-5 mr-2 text-[#18005F]" />
           Education
-        </Typography>
-        <List>
+        </h3>
+        <div className="space-y-4">
           {application.resume.education.map((edu, index) => (
-            <ListItem key={index}>
-              <ListItemText
-                primary={`${edu.degree || ''}${edu.stream ? ` in ${edu.stream}` : ''}`.trim() || 'Education'}
-                secondary={
-                  <>
-                    {edu.college_or_school_name || 'N/A'}<br />
-                    {edu.start_year ? `${edu.start_year} - ${edu.end_year || 'Present'}` : 'N/A'}<br />
-                    {edu.performance_type && `${edu.performance_type}: ${edu.performance_score || 'N/A'}`}
-                  </>
-                }
-              />
-            </ListItem>
+            <motion.div 
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-white p-4 rounded-lg border border-gray-200"
+            >
+              <h4 className="font-medium text-gray-900">
+                {`${edu.degree || ''}${edu.stream ? ` in ${edu.stream}` : ''}`.trim() || 'Education'}
+              </h4>
+              <p className="text-gray-600 text-sm mt-1">{edu.college_or_school_name || 'N/A'}</p>
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <Calendar className="w-4 h-4 mr-1" />
+                <span>
+                  {edu.start_year ? `${edu.start_year} - ${edu.end_year || 'Present'}` : 'N/A'}
+                </span>
+                {edu.performance_type && (
+                  <span className="ml-4">
+                    {edu.performance_type}: {edu.performance_score || 'N/A'}
+                  </span>
+                )}
+              </div>
+            </motion.div>
           ))}
-        </List>
-      </Box>
+        </div>
+      </div>
     );
   };
 
@@ -194,28 +218,45 @@ const ApplicationDetailPage = () => {
     if (!application?.resume?.work_experiences?.length) return null;
     
     return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Briefcase className="w-5 h-5 mr-2 text-[#18005F]" />
           Work Experience
-        </Typography>
-        <List>
+        </h3>
+        <div className="space-y-4">
           {application.resume.work_experiences.map((exp, index) => (
-            <ListItem key={index}>
-              <ListItemText
-                primary={`${exp.designation || 'Role'} at ${exp.organization || 'Company'}`}
-                secondary={
-                  <>
-                    {exp.profile && `${exp.profile} | `}
-                    {formatDate(exp.start_date)} - {exp.currently_working ? 'Present' : formatDate(exp.end_date) || 'N/A'}<br />
-                    {exp.location && `${exp.location_type === 'ON_SITE' ? 'On Site' : 'Remote'} | ${exp.location}`}<br />
-                    {exp.description || 'No description provided'}
-                  </>
-                }
-              />
-            </ListItem>
+            <motion.div 
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-white p-4 rounded-lg border border-gray-200"
+            >
+              <h4 className="font-medium text-gray-900">
+                {`${exp.designation || 'Role'} at ${exp.organization || 'Company'}`}
+              </h4>
+              {exp.profile && (
+                <p className="text-gray-600 text-sm mt-1">{exp.profile}</p>
+              )}
+              <div className="flex items-center text-sm text-gray-500 mt-2">
+                <Calendar className="w-4 h-4 mr-1" />
+                <span>
+                  {formatDate(exp.start_date)} - {exp.currently_working ? 'Present' : formatDate(exp.end_date) || 'N/A'}
+                </span>
+                {exp.location && (
+                  <span className="ml-4 flex items-center">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    {exp.location_type === 'ON_SITE' ? 'On Site' : 'Remote'} | {exp.location}
+                  </span>
+                )}
+              </div>
+              {exp.description && (
+                <p className="mt-2 text-gray-600 text-sm">{exp.description}</p>
+              )}
+            </motion.div>
           ))}
-        </List>
-      </Box>
+        </div>
+      </div>
     );
   };
 
@@ -223,16 +264,25 @@ const ApplicationDetailPage = () => {
     if (!application?.resume?.skills?.length) return null;
     
     return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Code2 className="w-5 h-5 mr-2 text-[#18005F]" />
           Skills
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        </h3>
+        <div className="flex flex-wrap gap-2">
           {application.resume.skills.map((skill, index) => (
-            <Chip key={index} label={skill.name || 'Skill'} />
+            <motion.span
+              key={index}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
+              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#18005F]/10 text-[#18005F]"
+            >
+              {skill.name || 'Skill'}
+            </motion.span>
           ))}
-        </Box>
-      </Box>
+        </div>
+      </div>
     );
   };
 
@@ -240,31 +290,47 @@ const ApplicationDetailPage = () => {
     if (!application?.resume?.academic_projects?.length) return null;
     
     return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <BookOpen className="w-5 h-5 mr-2 text-[#18005F]" />
           Academic Projects
-        </Typography>
-        <List>
+        </h3>
+        <div className="space-y-4">
           {application.resume.academic_projects.map((project, index) => (
-            <ListItem key={index}>
-              <ListItemText
-                primary={project.title || 'Untitled Project'}
-                secondary={
-                  <>
-                    {formatDate(project.start_date)} - {project.currently_ongoing ? 'Ongoing' : formatDate(project.end_date) || 'N/A'}<br />
-                    {project.description || 'No description provided'}<br />
-                    {project.project_link && (
-                      <Link href={project.project_link} target="_blank" rel="noopener">
-                        Project Link
-                      </Link>
-                    )}
-                  </>
-                }
-              />
-            </ListItem>
+            <motion.div 
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-white p-4 rounded-lg border border-gray-200"
+            >
+              <h4 className="font-medium text-gray-900">
+                {project.title || 'Untitled Project'}
+              </h4>
+              <div className="flex items-center text-sm text-gray-500 mt-1">
+                <Calendar className="w-4 h-4 mr-1" />
+                <span>
+                  {formatDate(project.start_date)} - {project.currently_ongoing ? 'Ongoing' : formatDate(project.end_date) || 'N/A'}
+                </span>
+              </div>
+              {project.description && (
+                <p className="mt-2 text-gray-600 text-sm">{project.description}</p>
+              )}
+              {project.project_link && (
+                <a 
+                  href={project.project_link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-[#18005F] text-sm mt-2 hover:underline"
+                >
+                  <Link2 className="w-4 h-4 mr-1" />
+                  View Project
+                </a>
+              )}
+            </motion.div>
           ))}
-        </List>
-      </Box>
+        </div>
+      </div>
     );
   };
 
@@ -273,198 +339,298 @@ const ApplicationDetailPage = () => {
     
     return (
       <>
-        <Divider sx={{ my: 3 }} />
-        <Typography variant="h6" gutterBottom>
+        <div className="border-t border-gray-200 my-6" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Award className="w-5 h-5 mr-2 text-[#18005F]" />
           Screening Questions
-        </Typography>
-        <List>
+        </h3>
+        <div className="space-y-4">
           {application.screening_answers.map((answer, index) => (
-            <ListItem key={index}>
-              <ListItemAvatar>
-                <Avatar>{index + 1}</Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={answer || 'No answer provided'} />
-            </ListItem>
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-white p-4 rounded-lg border border-gray-200"
+            >
+              <div className="flex items-start">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#18005F]/10 text-[#18005F] font-medium mr-3 flex-shrink-0">
+                  {index + 1}
+                </div>
+                <p className="text-gray-800">{answer || 'No answer provided'}</p>
+              </div>
+            </motion.div>
           ))}
-        </List>
+        </div>
       </>
+    );
+  };
+
+  const renderStatusChart = () => {
+    if (!application?.status) return null;
+
+    const currentStatus = statusOptions.find(opt => opt.value === application.status);
+    const data = {
+      labels: [currentStatus?.label || 'Status', 'Other'],
+      datasets: [{
+        data: [1, 0.1], // Small slice for visualization
+        backgroundColor: [currentStatus?.color || '#18005F', '#E5E7EB'],
+        borderWidth: 0,
+        cutout: '70%'
+      }]
+    };
+
+    return (
+      <div className="relative w-24 h-24">
+        <Pie 
+          data={data} 
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false }
+            }
+          }} 
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className={`w-10 h-10 ${getStatusColor(application.status)} rounded-full flex items-center justify-center`}>
+            {currentStatus && (
+              <span className="text-xs font-bold text-white">
+                {currentStatus.label.charAt(0)}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
     );
   };
 
   if (loading && !application) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="w-6 h-6 animate-spin rounded-full border-2 border-[#18005F] border-t-transparent" />
+          <span className="text-gray-600">Loading application details...</span>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ my: 2 }}>
-        {error.includes('Only employers') ? (
-          <>
-            Only employers can view application details. Please switch to an employer account.
-            <Button onClick={() => navigate('/profile')} sx={{ ml: 2 }}>
-              Go to Profile
-            </Button>
-          </>
-        ) : (
-          error
-        )}
-      </Alert>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-md text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+          <p className="text-gray-600 mb-4">
+            {error.includes('Only employers') ? 
+              'Only employers can view application details. Please switch to an employer account.' : 
+              error}
+          </p>
+          <div className="flex justify-center space-x-3">
+            <button 
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Go Back
+            </button>
+            {error.includes('Only employers') && (
+              <button 
+                onClick={() => navigate('/profile')}
+                className="px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
+              >
+                Go to Profile
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     );
   }
 
   if (!application) {
     return (
-      <Alert severity="warning" sx={{ my: 2 }}>
-        Application not found
-        <Button onClick={() => navigate(-1)} sx={{ ml: 2 }}>
-          Go Back
-        </Button>
-      </Alert>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm max-w-md text-center">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-8 h-8 text-yellow-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Application Not Found</h3>
+          <p className="text-gray-600 mb-4">The requested application could not be found.</p>
+          <button 
+            onClick={() => navigate(-1)}
+            className="px-6 py-3 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
+          >
+            Back to Applications
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Button
-        startIcon={<ArrowBack />}
-        onClick={() => navigate(-1)}
-        sx={{ mb: 2 }}
-      >
-        Back to Applications
-      </Button>
-
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h4">
-            Application Details
-          </Typography>
-          {!isEditing ? (
-            <Button
-              startIcon={<Edit />}
-              onClick={() => setIsEditing(true)}
-              variant="outlined"
-            >
-              Edit Status
-            </Button>
-          ) : (
-            <Box>
-              <Button
-                startIcon={<Cancel />}
-                onClick={() => {
-                  setIsEditing(false);
-                  setStatus(application.status);
-                }}
-                sx={{ mr: 2 }}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(-1)}
+                className="flex items-center mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                Cancel
-              </Button>
-              <Button
-                startIcon={<CheckCircle />}
-                onClick={() => setOpenDialog(true)}
-                variant="contained"
-                color="primary"
+                <ArrowLeft className="w-5 h-5 text-[#18005F]" />
+              </motion.button>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Application Details</h1>
+                <p className="text-gray-600 text-sm">Review candidate information</p>
+              </div>
+            </div>
+            
+            {!isEditing ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsEditing(true)}
+                className="flex items-center px-4 py-2 border border-[#18005F] text-[#18005F] rounded-lg hover:bg-[#18005F]/10 transition-colors"
               >
-                Save
-              </Button>
-            </Box>
-          )}
-        </Box>
-
-        <Box display="flex" alignItems="center" mb={3}>
-          <Avatar
-            src={application.candidate_profile?.profile_picture_url || ''}
-            sx={{ width: 80, height: 80, mr: 3 }}
-          >
-            {renderCandidateName().charAt(0) || '?'}
-          </Avatar>
-          <Box>
-            <Typography variant="h5">
-              {renderCandidateName()}
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary">
-              {application.candidate_email || 'N/A'}
-            </Typography>
-            {isEditing ? (
-              <FormControl sx={{ mt: 2, minWidth: 200 }}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={status}
-                  label="Status"
-                  onChange={handleStatusChange}
-                >
-                  {statusOptions.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit Status
+              </motion.button>
             ) : (
-              <Chip
-                label={application.status || 'N/A'}
-                color={getStatusColor(application.status)}
-                sx={{ mt: 1 }}
-              />
+              <div className="flex space-x-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setStatus(application.status);
+                  }}
+                  className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setOpenDialog(true)}
+                  className="flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Save Changes
+                </motion.button>
+              </div>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
+      </div>
 
-        <Divider sx={{ my: 3 }} />
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+        >
+          {/* Candidate Header */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center">
+              <div className="flex items-center mb-4 md:mb-0 md:mr-6">
+                <div className="relative">
+                  <img
+                    src={application.candidate_profile?.profile_picture_url || ''}
+                    alt={renderCandidateName()}
+                    className="w-20 h-20 rounded-full object-cover border-2 border-[#18005F]/20"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '';
+                      e.target.className = 'w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-400 border-2 border-[#18005F]/20';
+                      e.target.textContent = renderCandidateName().charAt(0) || '?';
+                    }}
+                  />
+                  {renderStatusChart()}
+                </div>
+                <div className="ml-4">
+                  <h2 className="text-xl font-bold text-gray-900">{renderCandidateName()}</h2>
+                  <div className="flex items-center text-gray-600 text-sm mt-1">
+                    <Mail className="w-4 h-4 mr-1" />
+                    <span>{application.candidate_email || 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600 text-sm mt-1">
+                    <MapPin className="w-4 h-4 mr-1" />
+                    <span>{application.candidate_profile?.current_city || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
 
-        <Typography variant="h6" gutterBottom>
-          Position Details
-        </Typography>
-        <List>
-          <ListItem>
-            <ListItemText
-              primary="Position"
-              secondary={application.job_title || application.internship_title || 'N/A'}
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemText
-              primary="Type"
-              secondary={application.candidate_profile?.candidate_type || 'N/A'}
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemText
-              primary="Current City"
-              secondary={application.candidate_profile?.current_city || 'N/A'}
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemText
-              primary="Applied On"
-              secondary={formatDate(application.applied_at)}
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemText
-              primary="Last Updated"
-              secondary={formatDate(application.updated_at)}
-            />
-          </ListItem>
-        </List>
+              <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-500 text-sm">Position</p>
+                  <p className="font-medium">
+                    {application.job_title || application.internship_title || 'N/A'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-500 text-sm">Candidate Type</p>
+                  <p className="font-medium">
+                    {application.candidate_profile?.candidate_type || 'N/A'}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-gray-500 text-sm">Applied On</p>
+                  <p className="font-medium">
+                    {formatDate(application.applied_at)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {application.resume && (
-          <>
-            <Divider sx={{ my: 3 }} />
-            <Typography variant="h6" gutterBottom>
-              Resume Details
-            </Typography>
+          {/* Status Selector (Editing) */}
+          {isEditing && (
+            <div className="p-6 border-b border-gray-200 bg-gray-50">
+              <div className="max-w-md">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Application Status
+                </label>
+                <div className="relative">
+                  <select
+                    value={status}
+                    onChange={handleStatusChange}
+                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#18005F] focus:border-[#18005F] rounded-lg"
+                  >
+                    {statusOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  Current status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(application.status)} text-white`}>
+                    {application.status}
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
 
-            {application.resume.career_objective && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Career Objective
-                </Typography>
-                <Typography>{application.resume.career_objective}</Typography>
-              </Box>
+          {/* Content Sections */}
+          <div className="p-6">
+            {application.resume?.career_objective && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Career Objective</h3>
+                <p className="text-gray-700">{application.resume.career_objective}</p>
+              </div>
             )}
 
             {renderEducation()}
@@ -472,111 +638,147 @@ const ApplicationDetailPage = () => {
             {renderSkills()}
             {renderAcademicProjects()}
 
-            {application.resume.extra_curricular_activities?.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
+            {application.resume?.extra_curricular_activities?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Trophy className="w-5 h-5 mr-2 text-[#18005F]" />
                   Extra Curricular Activities
-                </Typography>
-                <List>
+                </h3>
+                <div className="space-y-2">
                   {application.resume.extra_curricular_activities.map((activity, index) => (
-                    <ListItem key={index}>
-                      <ListItemText
-                        primary={activity.description || 'Activity'}
-                      />
-                    </ListItem>
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-gray-700">{activity.description || 'Activity'}</p>
+                    </div>
                   ))}
-                </List>
-              </Box>
+                </div>
+              </div>
             )}
 
-            {application.resume.trainings_courses?.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
+            {application.resume?.trainings_courses?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <GraduationCap className="w-5 h-5 mr-2 text-[#18005F]" />
                   Trainings & Courses
-                </Typography>
-                <List>
+                </h3>
+                <div className="space-y-4">
                   {application.resume.trainings_courses.map((course, index) => (
-                    <ListItem key={index}>
-                      <ListItemText
-                        primary={course.training_program || 'Training Program'}
-                        secondary={
-                          <>
-                            {formatDate(course.start_date)} - {course.currently_ongoing ? 'Ongoing' : formatDate(course.end_date) || 'N/A'}<br />
-                            {course.organization && `Organization: ${course.organization}`}<br />
-                            {course.description}
-                          </>
-                        }
-                      />
-                    </ListItem>
+                    <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
+                      <h4 className="font-medium text-gray-900">
+                        {course.training_program || 'Training Program'}
+                      </h4>
+                      <p className="text-gray-600 text-sm mt-1">
+                        {course.organization && `Organization: ${course.organization}`}
+                      </p>
+                      <div className="flex items-center text-sm text-gray-500 mt-2">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        <span>
+                          {formatDate(course.start_date)} - {course.currently_ongoing ? 'Ongoing' : formatDate(course.end_date) || 'N/A'}
+                        </span>
+                      </div>
+                      {course.description && (
+                        <p className="mt-2 text-gray-600 text-sm">{course.description}</p>
+                      )}
+                    </div>
                   ))}
-                </List>
-              </Box>
+                </div>
+              </div>
             )}
 
-            {application.resume.portfolio_work_samples?.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
+            {application.resume?.portfolio_work_samples?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Link2 className="w-5 h-5 mr-2 text-[#18005F]" />
                   Portfolio Work Samples
-                </Typography>
-                <List>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {application.resume.portfolio_work_samples.map((sample, index) => (
-                    <ListItem key={index}>
-                      <ListItemText
-                        primary={sample.name || 'Work Sample'}
-                        secondary={
-                          <Link href={sample.url} target="_blank" rel="noopener">
-                            {sample.url}
-                          </Link>
-                        }
-                      />
-                    </ListItem>
+                    <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
+                      <h4 className="font-medium text-gray-900">
+                        {sample.name || 'Work Sample'}
+                      </h4>
+                      <a 
+                        href={sample.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-[#18005F] text-sm mt-2 hover:underline"
+                      >
+                        <Link2 className="w-4 h-4 mr-1" />
+                        {sample.url.length > 30 ? `${sample.url.substring(0, 30)}...` : sample.url}
+                      </a>
+                    </div>
                   ))}
-                </List>
-              </Box>
+                </div>
+              </div>
             )}
 
-            {application.resume.accomplishments?.length > 0 && (
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
+            {application.resume?.accomplishments?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Award className="w-5 h-5 mr-2 text-[#18005F]" />
                   Accomplishments
-                </Typography>
-                <List>
+                </h3>
+                <div className="space-y-2">
                   {application.resume.accomplishments.map((accomplishment, index) => (
-                    <ListItem key={index}>
-                      <ListItemText
-                        primary={accomplishment.additional_details || 'Accomplishment'}
-                      />
-                    </ListItem>
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                      <p className="text-gray-700">{accomplishment.additional_details || 'Accomplishment'}</p>
+                    </div>
                   ))}
-                </List>
-              </Box>
+                </div>
+              </div>
             )}
-          </>
-        )}
 
-        {renderScreeningAnswers()}
-        {renderOnlineProfiles()}
-      </Paper>
+            {renderScreeningAnswers()}
+            {renderOnlineProfiles()}
+          </div>
+        </motion.div>
+      </div>
 
       {/* Confirmation Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Confirm Status Change</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to change the application status from{' '}
-            <Chip label={application.status} color={getStatusColor(application.status)} size="small" />{' '}
-            to{' '}
-            <Chip label={status} color={getStatusColor(status)} size="small" />?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button onClick={handleConfirmDialog} color="primary" autoFocus>
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      <AnimatePresence>
+        {openDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-lg max-w-md w-full"
+            >
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Status Change</h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to change the application status from{' '}
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(application.status)} text-white`}>
+                    {application.status}
+                  </span>{' '}
+                  to{' '}
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)} text-white`}>
+                    {status}
+                  </span>?
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setOpenDialog(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmDialog}
+                    className="px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

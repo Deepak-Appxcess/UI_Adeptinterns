@@ -52,6 +52,7 @@ function App() {
   const [featuredInternships, setFeaturedInternships] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  
 
  useEffect(() => {
     const getFeaturedCourses = async () => {
@@ -164,7 +165,7 @@ function App() {
      <GoogleOAuthProvider clientId="380706120194-tlm6ibu4b4jun9tssfgpcgib1mkflqir.apps.googleusercontent.com">
     <Router>
       <div className={`min-h-screen ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-gray-100'} transition-colors duration-300`}>
-        <div className={`${isDarkMode ? 'bg-black border-white/10' : 'bg-white border-black/10'} rounded-[48px] min-h-[calc(100vh-2rem)] overflow-hidden border transition-colors duration-300`}>
+<div className={`${isDarkMode ? 'bg-black border-white/10' : 'bg-[rgb(174,178,191,0.18)] border-black/10'}  min-h-[calc(100vh-2rem)] overflow-hidden border transition-colors duration-300`}>
           <Navbar 
             isDarkMode={isDarkMode} 
             toggleTheme={toggleTheme} 
@@ -277,6 +278,8 @@ function Home({
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'jobs', 'internships'
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false); // Add this line
+
   const navigate = useNavigate();
 
   const handleSearch = async (e) => {
@@ -419,164 +422,337 @@ function Home({
       </div>
 
       {/* Common Search Section */}
-      <section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-4xl font-bold mb-4">Find Your Perfect Opportunity</h2>
-          <p className={`text-lg ${isDarkMode ? 'text-white/80' : 'text-black/80'}`}>
-            Search through thousands of jobs and internships
-          </p>
+<section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+  <div className="text-center mb-12">
+    <h2 className="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+      Discover Your Next Opportunity
+    </h2>
+    <p className={`text-lg md:text-xl ${isDarkMode ? 'text-white/80' : 'text-black/80'} max-w-2xl mx-auto`}>
+      Find the perfect job or internship that matches your skills and aspirations
+    </p>
+  </div>
+
+  {/* Enhanced Search Form */}
+  <form onSubmit={handleSearch} className="max-w-5xl mx-auto mb-12">
+    <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl p-1 shadow-xl ${isDarkMode ? 'shadow-gray-900/30' : 'shadow-gray-200/50'}`}>
+      {/* Modern Search Tabs */}
+      <div className="flex justify-center mb-6 pt-4">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-full p-1 flex`}>
+          {[
+            { key: 'all', label: 'All Opportunities', icon: '🔍' },
+            { key: 'jobs', label: 'Jobs', icon: '💼' },
+            { key: 'internships', label: 'Internships', icon: '🎓' }
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                activeTab === tab.key
+                  ? isDarkMode
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-blue-500 text-white shadow-md'
+                  : isDarkMode
+                  ? 'text-white/80 hover:text-white hover:bg-gray-700'
+                  : 'text-black/80 hover:text-black hover:bg-gray-200'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Search Form */}
-        <form onSubmit={handleSearch} className="max-w-4xl mx-auto mb-8">
-          <div className={`${isDarkMode ? 'bg-white/10' : 'bg-black/5'} rounded-2xl p-6 backdrop-blur-sm`}>
-            {/* Search Tabs */}
-            <div className="flex justify-center mb-6">
-              <div className={`${isDarkMode ? 'bg-white/10' : 'bg-black/10'} rounded-xl p-1 flex`}>
-                {[
-                  { key: 'all', label: 'All Opportunities' },
-                  { key: 'jobs', label: 'Jobs Only' },
-                  { key: 'internships', label: 'Internships Only' }
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                      activeTab === tab.key
-                        ? isDarkMode
-                          ? 'bg-white text-black'
-                          : 'bg-black text-white'
-                        : isDarkMode
-                        ? 'text-white/80 hover:text-white'
-                        : 'text-black/80 hover:text-black'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Enhanced Search Input */}
+      <div className="relative flex items-center px-6 pb-6">
+        <div className="absolute left-9 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          placeholder="Search by skills, job title, company, or location..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={`w-full pl-12 pr-6 py-4 rounded-xl text-lg ${
+            isDarkMode 
+              ? 'bg-gray-800 text-white placeholder-gray-400 border-gray-700 focus:border-blue-500' 
+              : 'bg-gray-50 text-black placeholder-gray-500 border-gray-200 focus:border-blue-400'
+          } border-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30`}
+        />
+        <button
+          type="submit"
+          disabled={searchLoading}
+          className={`ml-4 px-6 py-4 rounded-xl font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
+            isDarkMode
+              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+              : 'bg-blue-500 text-white hover:bg-blue-600 shadow-lg'
+          } ${searchLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+        >
+          {searchLoading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Searching...
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Find Opportunities
+            </>
+          )}
+        </button>
+      </div>
 
-            {/* Search Input */}
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Search by skills, job title, or company..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full px-6 py-4 rounded-xl text-lg ${
-                    isDarkMode 
-                      ? 'bg-white/10 text-white placeholder-white/60 border-white/20' 
-                      : 'bg-white text-black placeholder-black/60 border-black/20'
-                  } border focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={searchLoading}
-                className={`px-8 py-4 rounded-xl font-semibold transition-all ${
-                  isDarkMode
-                    ? 'bg-white text-black hover:bg-white/90'
-                    : 'bg-black text-white hover:bg-black/90'
-                } ${searchLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      {/* Advanced Filters (Collapsible) */}
+      <div className="px-6 pb-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <div className="flex justify-between items-center">
+            <button
+              type="button"
+              className={`text-sm font-medium flex items-center gap-1 ${
+                isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
+              }`}
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            >
+              {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-4 w-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                {searchLoading ? 'Searching...' : 'Search'}
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className={`text-sm font-medium ${
+                  isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Clear search
               </button>
-            </div>
-
-            {/* Quick Filters */}
-            <div className="mt-4 flex flex-wrap gap-2 justify-center">
-              {['React', 'Python', 'JavaScript', 'Data Science', 'UI/UX', 'Marketing'].map((skill) => (
-                <button
-                  key={skill}
-                  type="button"
-                  onClick={() => setSearchQuery(skill)}
-                  className={`px-4 py-2 rounded-full text-sm ${
-                    isDarkMode
-                      ? 'bg-white/10 text-white/80 hover:bg-white/20'
-                      : 'bg-black/10 text-black/80 hover:bg-black/20'
-                  } transition-all`}
-                >
-                  {skill}
-                </button>
-              ))}
-            </div>
-          </div>
-        </form>
-
-        {/* Search Results */}
-        {searchResults.length > 0 && (
-          <div className="max-w-6xl mx-auto mb-16">
-            <h3 className="text-xl font-semibold mb-6">Search Results ({searchResults.length})</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {searchResults.slice(0, 6).map((item, index) => (
-                <div key={`${item.type}-${item.id}`} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
-                  <div className="flex items-center mb-3">
-                    <img
-                      src={getCompanyLogo(item.company_logo_url, item.employer_organization?.organization_name)}
-                      alt="Company Logo"
-                      className="w-10 h-10 rounded-lg mr-3"
-                      onError={(e) => {
-                        e.target.src = getCompanyLogo(null, item.employer_organization?.organization_name);
-                      }}
-                    />
-                    <div>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                        item.type === 'job' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {item.type === 'job' ? 'Job' : 'Internship'}
-                      </span>
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    {item.type === 'job' ? item.job_title : item.internship_profile_title}
-                  </h3>
-                  <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-2`}>
-                    {item.employer_organization?.organization_name || 'Company Name'}
-                  </p>
-                  <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'} mb-2`}>
-                    {item.type === 'job' 
-                      ? getWorkType(item.job_type, item.work_schedule)
-                      : getInternshipType(item.internship_type, item.is_part_time)
-                    }
-                  </p>
-                  <p className={`${isDarkMode ? 'text-white/80' : 'text-black/80'} mb-4`}>
-                    {item.type === 'job' 
-                      ? formatSalary(item.fixed_pay_min, item.fixed_pay_max)
-                      : formatStipend(item.fixed_stipend_min, item.fixed_stipend_max, item.is_paid)
-                    }
-                  </p>
-                  <Link 
-                    to={item.type === 'job' ? `/job/${item.id}` : `/internship/${item.id}`} 
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    View details →
-                  </Link>
-                </div>
-              ))}
-            </div>
-            {searchResults.length > 6 && (
-              <div className="text-center mt-6">
-                <button
-                  onClick={() => handleViewAll(activeTab === 'jobs' ? 'jobs' : activeTab === 'internships' ? 'internships' : 'jobs')}
-                  className={`px-6 py-3 rounded-xl font-semibold ${
-                    isDarkMode
-                      ? 'bg-white text-black hover:bg-white/90'
-                      : 'bg-black text-white hover:bg-black/90'
-                  } transition-all`}
-                >
-                  View All Results
-                </button>
-              </div>
             )}
           </div>
-        )}
-      </section>
+          
+          {showAdvancedFilters && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Location
+                </label>
+                <select
+                  className={`w-full rounded-lg px-4 py-2 text-sm ${
+                    isDarkMode 
+                      ? 'bg-gray-800 border-gray-700 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } border focus:ring-blue-500 focus:border-blue-500`}
+                >
+                  <option value="">Anywhere</option>
+                  <option value="remote">Remote</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="in_office">In-office</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Experience Level
+                </label>
+                <select
+                  className={`w-full rounded-lg px-4 py-2 text-sm ${
+                    isDarkMode 
+                      ? 'bg-gray-800 border-gray-700 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } border focus:ring-blue-500 focus:border-blue-500`}
+                >
+                  <option value="">Any experience</option>
+                  <option value="entry">Entry Level</option>
+                  <option value="mid">Mid Level</option>
+                  <option value="senior">Senior Level</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Salary Range
+                </label>
+                <select
+                  className={`w-full rounded-lg px-4 py-2 text-sm ${
+                    isDarkMode 
+                      ? 'bg-gray-800 border-gray-700 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  } border focus:ring-blue-500 focus:border-blue-500`}
+                >
+                  <option value="">Any salary</option>
+                  <option value="0-50000">Up to ₹50,000</option>
+                  <option value="50000-100000">₹50,000 - ₹1,00,000</option>
+                  <option value="100000">₹1,00,000+</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
+      {/* Popular Skills */}
+      <div className="px-6 pb-6">
+        <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Popular skills:
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {['React', 'Python', 'JavaScript', 'Data Science', 'UI/UX', 'Marketing', 'Node.js', 'Flutter', 'AWS'].map((skill) => (
+            <button
+              key={skill}
+              type="button"
+              onClick={() => setSearchQuery(skill)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                isDarkMode
+                  ? 'bg-gray-800 text-white/90 hover:bg-gray-700 hover:text-white'
+                  : 'bg-gray-100 text-black/90 hover:bg-gray-200 hover:text-black'
+              } flex items-center gap-1`}
+            >
+              {skill}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  </form>
+
+  {/* Enhanced Search Results */}
+  {searchResults.length > 0 && (
+    <div className="max-w-7xl mx-auto mb-16">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl md:text-2xl font-semibold">
+          We found {searchResults.length} matching {searchResults.length === 1 ? 'opportunity' : 'opportunities'}
+        </h3>
+        <div className="flex items-center gap-3">
+          <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Sort by:</span>
+          <select
+            className={`text-sm rounded-lg px-3 py-1 ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700 text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            } border focus:ring-blue-500 focus:border-blue-500`}
+          >
+            <option>Most relevant</option>
+            <option>Newest first</option>
+            <option>Highest salary</option>
+          </select>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {searchResults.slice(0, 6).map((item, index) => (
+          <div 
+            key={`${item.type}-${item.id}`} 
+            className={`${isDarkMode ? 'bg-gray-900 hover:bg-gray-800' : 'bg-white hover:bg-gray-50'} rounded-xl p-6 transition-all shadow-md hover:shadow-lg border ${
+              isDarkMode ? 'border-gray-800' : 'border-gray-100'
+            }`}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center">
+                <img
+                  src={getCompanyLogo(item.company_logo_url, item.employer_organization?.organization_name)}
+                  alt="Company Logo"
+                  className="w-12 h-12 rounded-lg mr-3 object-cover"
+                  onError={(e) => {
+                    e.target.src = getCompanyLogo(null, item.employer_organization?.organization_name);
+                  }}
+                />
+                <div>
+                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                    item.type === 'job' 
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' 
+                      : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                  }`}>
+                    {item.type === 'job' ? 'Job' : 'Internship'}
+                  </span>
+                </div>
+              </div>
+              <button className={`p-2 rounded-full ${
+                isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </button>
+            </div>
+            
+            <h3 className="text-lg font-semibold mb-2 line-clamp-2">
+              {item.type === 'job' ? item.job_title : item.internship_profile_title}
+            </h3>
+            <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+              {item.employer_organization?.organization_name || 'Company Name'}
+            </p>
+            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-3`}>
+              {item.type === 'job' 
+                ? getWorkType(item.job_type, item.work_schedule)
+                : getInternshipType(item.internship_type, item.is_part_time)
+              }
+            </p>
+            <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} font-medium mb-4`}>
+              {item.type === 'job' 
+                ? formatSalary(item.fixed_pay_min, item.fixed_pay_max)
+                : formatStipend(item.fixed_stipend_min, item.fixed_stipend_max, item.is_paid)
+              }
+            </p>
+            
+            <div className="flex justify-between items-center">
+              <Link 
+                to={item.type === 'job' ? `/job/${item.id}` : `/internship/${item.id}`} 
+                className={`text-sm font-medium ${
+                  isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
+                } flex items-center gap-1`}
+              >
+                View details
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                {Math.floor(Math.random() * 5) + 1} days ago
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {searchResults.length > 6 && (
+        <div className="text-center mt-8">
+          <button
+            onClick={() => handleViewAll(activeTab === 'jobs' ? 'jobs' : activeTab === 'internships' ? 'internships' : 'jobs')}
+            className={`px-8 py-3 rounded-xl font-semibold transition-all inline-flex items-center gap-2 ${
+              isDarkMode
+                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+                : 'bg-blue-500 text-white hover:bg-blue-600 shadow-lg'
+            }`}
+          >
+            View All {searchResults.length} Results
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  )}
+</section>
       {/* Featured Jobs Section */}
       <section className={`py-16 ${isDarkMode ? 'text-white' : 'text-black'}`}>
         <div className="flex justify-between items-center mb-8">
@@ -588,7 +764,8 @@ function Home({
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((index) => (
-              <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 animate-pulse`}>
+              <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'
+} rounded-xl p-6 animate-pulse`}>
                 <div className="h-4 bg-gray-300 rounded mb-2"></div>
                 <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
                 <div className="h-3 bg-gray-300 rounded mb-2 w-1/2"></div>
@@ -600,7 +777,8 @@ function Home({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredJobs.length > 0 ? featuredJobs.map((job, index) => (
-              <div key={job.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
+              <div key={job.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'
+} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
                 <div className="flex items-center mb-3">
                   <img
                     src={getCompanyLogo(job.company_logo_url, job.employer_organization?.organization_name)}
@@ -667,7 +845,8 @@ function Home({
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((index) => (
-              <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 animate-pulse`}>
+              <div key={index} className={`${isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'
+} rounded-xl p-6 animate-pulse`}>
                 <div className="h-4 bg-gray-300 rounded mb-2"></div>
                 <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
                 <div className="h-3 bg-gray-300 rounded mb-2 w-1/2"></div>
@@ -679,7 +858,8 @@ function Home({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredInternships.length > 0 ? featuredInternships.map((internship, index) => (
-              <div key={internship.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-black/5'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
+              <div key={internship.id || index} className={`${isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'
+} rounded-xl p-6 hover:scale-[1.02] transition-transform`}>
                 <div className="flex items-center mb-3">
                   <img
                     src={getCompanyLogo(internship.company_logo_url, internship.employer_organization?.organization_name)}
@@ -767,7 +947,8 @@ function Home({
             <div
               key={course._id}
               className={`${
-                isDarkMode ? 'bg-white/5' : 'bg-black/5'
+                isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'
+
               } rounded-xl p-6 hover:scale-[1.02] transition-transform`}
             >
               <div className="h-48 rounded-lg overflow-hidden mb-4">
@@ -875,7 +1056,8 @@ function Home({
               <div 
                 key={index} 
                 className={`p-6 rounded-xl bg-gradient-to-br ${feature.gradient} backdrop-blur-sm ${
-                  isDarkMode ? 'bg-white/5' : 'bg-black/5'
+                  isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'
+
                 }`}
               >
                 <h4 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-black'}`}>
