@@ -275,43 +275,44 @@ const ResumePage = () => {
 
 const ImportResumePopup = ({ onClose, onManualCreate, onParsedData }) => {
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-gray-200">
-        <div className="text-center mb-6">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-2xl xl:max-w-3xl border border-gray-200 p-4 sm:p-6 mx-auto">
+        <div className="text-center mb-6"> 
           <div className="w-16 h-16 bg-[#18005F]/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <FileText className="w-8 h-8 text-[#18005F]" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Your Resume</h2>
-          <p className="text-gray-600">Choose how you want to build your resume</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Create Your Resume</h2>
+          <p className="text-gray-600 text-base sm:text-lg">Choose how you want to build your resume</p>
         </div>
-        
-        <div className="space-y-6">
-          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-3">Import your resume (Recommended)</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              We'll scan your resume and pre-fill sections to help you save time
-            </p>
-            <ResumeParser onParsedData={onParsedData} />
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+          <div className="flex-1 bg-gray-50 p-4 sm:p-6 rounded-xl border border-gray-200 flex flex-col justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">Import your resume <span className="hidden sm:inline">(Recommended)</span></h3>
+              <p className="text-sm text-gray-600 mb-4">
+                We'll scan your resume and pre-fill sections to help you save time
+              </p>
+              <ResumeParser onParsedData={onParsedData} />
+            </div>
           </div>
-          
-          <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-3">Create resume manually</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Fill information in each section to create your resume
-            </p>
+          <div className="flex-1 bg-gray-50 p-4 sm:p-6 rounded-xl border border-gray-200 flex flex-col justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">Create resume manually</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Fill information in each section to create your resume
+              </p>
+            </div>
             <button
               onClick={onManualCreate}
-              className="w-full bg-white border border-gray-300 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+              className="w-full bg-white border border-gray-300 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors shadow-sm mt-2"
             >
               Create manually
             </button>
           </div>
         </div>
-
         {onClose && (
           <button
             onClick={onClose}
-            className="mt-6 text-gray-500 hover:text-gray-700 text-sm font-medium"
+            className="mt-6 text-gray-500 hover:text-gray-700 text-sm font-medium w-full sm:w-auto"
           >
             Close
           </button>

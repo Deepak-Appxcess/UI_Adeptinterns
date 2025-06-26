@@ -858,13 +858,13 @@ const EmployerProfile = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl p-6 w-full max-w-2xl my-8"
+              className="bg-white rounded-xl w-full max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-3 sm:p-6 my-8 mx-auto overflow-y-auto"
             >
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Organization Profile</h3>
               
@@ -872,7 +872,7 @@ const EmployerProfile = () => {
                 {/* Account Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">Account Type</label>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className={`relative flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       !organizationData.is_freelancer 
                         ? 'border-[#18005F] bg-[#18005F]/5' 
@@ -916,7 +916,7 @@ const EmployerProfile = () => {
                 </div>
 
                 {/* Common Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Designation *
@@ -981,7 +981,7 @@ const EmployerProfile = () => {
 
                 {/* Organization-specific fields */}
                 {!organizationData.is_freelancer && (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Organization Name *
@@ -1012,7 +1012,7 @@ const EmployerProfile = () => {
                       {errors.organization_description && <p className="mt-1 text-sm text-red-600">{errors.organization_description}</p>}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Verification Method *
@@ -1120,7 +1120,7 @@ const EmployerProfile = () => {
                   </div>
                 )}
 
-                <div className="flex justify-end space-x-3">
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
                   <button
                     type="button"
                     onClick={() => setShowOrganizationForm(false)}

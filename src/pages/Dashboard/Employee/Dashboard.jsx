@@ -442,12 +442,12 @@ const EmployerDashboard = () => {
               change: '+24%'
             },
             {
-              title: 'Success Rate',
-              value: '78%',
+              title: 'Total Courses ',
+              value: '0%',
               icon: Target,
               color: 'text-[#18005F]',
               bgColor: 'bg-[#18005F]/10',
-              change: '+5%'
+              change: '0%'
             }
           ].map((stat, index) => (
             <motion.div

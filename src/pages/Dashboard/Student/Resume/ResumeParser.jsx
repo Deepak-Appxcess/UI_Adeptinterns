@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as pdfjs from 'pdfjs-dist';
 import workerPath from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { parseResumeWithOpenAI } from './resumeParserUtils';
@@ -12,53 +12,51 @@ function ResumeParser({ onParsedData }) {
   const [error, setError] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // Automatically parse when pdfFile is set
+  useEffect(() => {
+    if (pdfFile) {
+      const doParse = async () => {
+        setIsLoading(true);
+        setError(null);
+        // Simulate upload progress
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 10;
+          setUploadProgress(Math.min(progress, 90));
+          if (progress >= 90) clearInterval(interval);
+        }, 200);
+        try {
+          const arrayBuffer = await pdfFile.arrayBuffer();
+          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+          let fullText = '';
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+          }
+          const parsedData = await parseResumeWithOpenAI(fullText);
+          setUploadProgress(100);
+          onParsedData(parsedData);
+        } catch (error) {
+          console.error('PDF Processing Error:', error);
+          setError('Failed to process PDF. Please try another file or create your resume manually.');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      doParse();
+    } else {
+      setUploadProgress(0);
+    }
+  }, [pdfFile, onParsedData]);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
       setError(null);
-      
-      // Simulate upload progress
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadProgress(Math.min(progress, 90));
-        if (progress >= 90) clearInterval(interval);
-      }, 200);
     } else {
       setError('Please upload a valid PDF file');
-    }
-  };
-
-  const extractText = async () => {
-    if (!pdfFile) {
-      setError('Please select a PDF file first');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const arrayBuffer = await pdfFile.arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-
-      let fullText = '';
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        fullText += textContent.items.map(item => item.str).join(' ') + '\n';
-      }
-
-      const parsedData = await parseResumeWithOpenAI(fullText);
-      setUploadProgress(100);
-      onParsedData(parsedData);
-
-    } catch (error) {
-      console.error('PDF Processing Error:', error);
-      setError('Failed to process PDF. Please try another file or create your resume manually.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -66,14 +64,14 @@ function ResumeParser({ onParsedData }) {
     <div className="space-y-4">
       {!pdfFile ? (
         <label className="block w-full cursor-pointer">
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#18005F] transition-colors">
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#18005F] transition-colors w-full max-w-xs sm:max-w-md mx-auto">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-700 font-medium mb-2">Drag & drop your resume PDF here</p>
             <p className="text-gray-500 text-sm mb-4">or click to browse files</p>
-            <button className="inline-flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-sm">
+            <div className="inline-flex items-center justify-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-sm w-full max-w-xs mx-auto mt-2">
               <Upload className="w-4 h-4 mr-2" />
               Select PDF
-            </button>
+            </div>
           </div>
           <input
             type="file"
@@ -84,7 +82,7 @@ function ResumeParser({ onParsedData }) {
           />
         </label>
       ) : (
-        <div className="border-2 border-gray-300 rounded-xl p-6">
+        <div className="border-2 border-gray-300 rounded-xl p-6 w-full max-w-xs sm:max-w-md mx-auto">
           <div className="flex items-center mb-4">
             <div className="w-10 h-10 bg-[#18005F]/10 rounded-lg flex items-center justify-center mr-3">
               <FileText className="w-5 h-5 text-[#18005F]" />
@@ -102,8 +100,6 @@ function ResumeParser({ onParsedData }) {
               </svg>
             </button>
           </div>
-          
-          {/* Progress bar */}
           {uploadProgress > 0 && uploadProgress < 100 && (
             <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
               <div 
@@ -112,27 +108,14 @@ function ResumeParser({ onParsedData }) {
               ></div>
             </div>
           )}
-          
-          <button
-            onClick={extractText}
-            disabled={isLoading}
-            className="w-full inline-flex items-center justify-center px-4 py-3 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Processing Resume...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Parse Resume
-              </>
-            )}
-          </button>
+          {isLoading && (
+            <div className="w-full flex items-center justify-center py-2">
+              <Loader2 className="w-5 h-5 mr-2 animate-spin text-[#18005F]" />
+              <span className="text-[#18005F] font-medium">Processing Resume...</span>
+            </div>
+          )}
         </div>
       )}
-      
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 flex items-start">
           <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />

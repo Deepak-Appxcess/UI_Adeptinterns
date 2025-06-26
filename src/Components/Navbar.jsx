@@ -130,9 +130,9 @@ function Navbar({ isDarkMode, toggleTheme }) {
 
   return (
     <>
-      <nav className={`flex justify-between items-center p-4 md:p-6 mx-4 md:mx-6 my-2 md:my-4 ${isDarkMode ? 'bg-white' : 'bg-black'} rounded-full transition-colors duration-300`}>
+      <nav className={`flex justify-between items-center p-4 md:p-6 mx-4 md:mx-6 my-2 md:my-4 ${isDarkMode ? 'bg-black' : 'bg-white'} rounded-full transition-colors duration-300`}>
         {/* Logo Section */}
-        <Link to="/" className={`flex items-center space-x-3 text-lg md:text-xl font-bold ${isDarkMode ? 'text-black' : 'text-white'}`}>
+        <Link to="/" className={`flex items-center space-x-3 text-lg md:text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
           {/* Website Logo */}
           {/* <div className="w-8 h-8 bg-[#18005F] rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
@@ -142,7 +142,7 @@ function Navbar({ isDarkMode, toggleTheme }) {
         
         {/* Navigation Links - Only show for non-employers */}
         {!isEmployer && (
-          <div className={`hidden md:flex space-x-8 ${isDarkMode ? 'text-black/80' : 'text-white/80'} text-sm`}>
+          <div className={`hidden md:flex space-x-8 ${isDarkMode ? 'text-white/80' : 'text-black/80'} text-sm`}>
             <Link to="/jobs" className="hover:text-[#18005F] transition-colors">Jobs</Link>
             <Link to="/internships" className="hover:text-[#18005F] transition-colors">Internships</Link>
             <Link to="/courses" className="hover:text-[#18005F] transition-colors">Courses</Link>
@@ -164,11 +164,11 @@ function Navbar({ isDarkMode, toggleTheme }) {
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-full ${
-                    isDarkMode ? 'hover:bg-black/10' : 'hover:bg-white/10'
+                    isDarkMode ? 'hover:bg-white/10' : 'hover:bg-black/10'
                   } transition-colors`}
                 >
                   {getProfileDisplay()}
-                  <ChevronDown className={`w-4 h-4 ${isDarkMode ? 'text-black' : 'text-white'} transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 ${isDarkMode ? 'text-white' : 'text-black'} transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown Menu */}
@@ -253,31 +253,19 @@ function Navbar({ isDarkMode, toggleTheme }) {
               <>
                 <button 
                   onClick={() => setShowLoginPopup(true)}
-                  className={`px-4 py-2 rounded-full text-sm ${
-                    isDarkMode 
-                      ? 'bg-black text-white' 
-                      : 'bg-white text-black'
-                  } transition-colors`}
+                  className="px-4 py-2 rounded-full text-sm bg-black text-white transition-colors"
                 >
                   Login
                 </button>
                 <Link 
                   to="/student" 
-                  className={`px-4 py-2 rounded-full text-sm ${
-                    isDarkMode 
-                      ? 'bg-black text-white' 
-                      : 'bg-white text-black'
-                  } font-medium transition-colors`}
+                  className="px-4 py-2 rounded-full text-sm bg-black text-white font-medium transition-colors"
                 >
                   Register
                 </Link>
                 <Link 
                   to="/employers" 
-                  className={`px-4 py-2 rounded-full text-sm border ${
-                    isDarkMode 
-                      ? 'border-black/10 text-black/80 hover:bg-black/5' 
-                      : 'border-white/10 text-white/80 hover:bg-white/5'
-                  } transition-colors`}
+                  className="px-4 py-2 rounded-full text-sm border border-black text-black bg-white hover:bg-gray-50 transition-colors"
                 >
                   For Employers
                 </Link>

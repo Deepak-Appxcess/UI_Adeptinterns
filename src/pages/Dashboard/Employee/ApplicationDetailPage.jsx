@@ -382,7 +382,7 @@ const ApplicationDetailPage = () => {
 
     return (
       <div className="relative w-24 h-24">
-        <Pie 
+        {/* <Pie 
           data={data} 
           options={{
             responsive: true,
@@ -392,7 +392,7 @@ const ApplicationDetailPage = () => {
               tooltip: { enabled: false }
             }
           }} 
-        />
+        /> */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className={`w-10 h-10 ${getStatusColor(application.status)} rounded-full flex items-center justify-center`}>
             {currentStatus && (
