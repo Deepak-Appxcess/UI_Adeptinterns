@@ -18,6 +18,8 @@ import {
   Calendar
 } from 'lucide-react';
 import api from '../services/api';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Internships() {
   const location = useLocation();
@@ -206,7 +208,8 @@ function Internships() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br py-8">
+      <ToastContainer />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -535,18 +538,27 @@ function Internships() {
                       
                       <div className="flex items-center justify-between">
                         <Link
-  to={`/internship/${internship.id}`}
-  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
->
-  More details <ChevronDown className="w-4 h-4 ml-1" />
-</Link>
-                        
-                        <Link
                           to={`/internship/${internship.id}`}
-                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
                         >
-                          Apply Now
+                          More details <ChevronDown className="w-4 h-4 ml-1" />
                         </Link>
+                        {internship.application_status === null ? (
+                          <Link
+                            to={`/internship/${internship.id}`}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                          >
+                            Apply Now
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-medium cursor-not-allowed"
+                            onClick={() => toast.info('Already applied to this internship')}
+                          >
+                            Applied
+                          </button>
+                        )}
                       </div>
                       
                       

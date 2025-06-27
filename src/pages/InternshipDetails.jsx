@@ -24,6 +24,8 @@ import {
   Users
 } from 'lucide-react';
 import api from '../services/api';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function InternshipDetails() {
   const { id } = useParams();
@@ -34,6 +36,9 @@ function InternshipDetails() {
   const [isApplying, setIsApplying] = useState(false);
   const [applicationSuccess, setApplicationSuccess] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showScreeningQuestions, setShowScreeningQuestions] = useState(false);
+  const [screeningAnswers, setScreeningAnswers] = useState([]);
+  const [applicationError, setApplicationError] = useState(null);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -50,6 +55,10 @@ function InternshipDetails() {
       setLoading(true);
       const response = await api.get(`/jobs/${id}/`);
       setInternship(response.data);
+      // Initialize answers array with empty strings if screening questions exist
+      if (response.data.screening_questions) {
+        setScreeningAnswers(new Array(response.data.screening_questions.length).fill(''));
+      }
     } catch (err) {
       console.error('Error fetching internship details:', err);
       setError('Failed to load internship details. Please try again later.');
@@ -58,24 +67,86 @@ function InternshipDetails() {
     }
   };
 
-  const handleApply = async () => {
+  const handleApplyClick = async () => {
     if (!isAuthenticated) {
       navigate('/login', { state: { from: `/internship/${id}` } });
       return;
     }
 
     try {
-      setIsApplying(true);
-      // API call to apply for the internship would go here
-      // await api.post(`/jobs/${id}/apply`);
+      // First check if resume exists
+      const resumeCheck = await api.get('/jobs/candidate/resume/');
       
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (resumeCheck.data?.detail === "Resume not found.") {
+        // No resume exists, navigate to resume page with redirect back
+        navigate('/resume', { state: { from: `/internship/${id}` } });
+        return;
+      }
+
+      // Resume exists, proceed with application
+      if (internship.screening_questions && internship.screening_questions.length > 0) {
+        setShowScreeningQuestions(true);
+      } else {
+        handleApply();
+      }
+    } catch (error) {
+      console.error('Error checking resume:', error);
+      if (error.response?.status === 404 || error.response?.data?.detail === "Resume not found.") {
+        // No resume exists, navigate to resume page with redirect back
+        navigate('/resume', { state: { from: `/internship/${id}` } });
+      } else {
+        toast.error('Failed to check resume status');
+      }
+    }
+  };
+
+  const handleAnswerChange = (index, value) => {
+    const newAnswers = [...screeningAnswers];
+    newAnswers[index] = value;
+    setScreeningAnswers(newAnswers);
+  };
+
+  const handleApply = async () => {
+    try {
+      setIsApplying(true);
+      setApplicationError(null);
+      
+      const payload = {
+        internship_id: id,
+        screening_answers: screeningAnswers
+      };
+
+      const response = await api.post('/jobs/apply/', payload);
       
       setApplicationSuccess(true);
+      setShowScreeningQuestions(false);
     } catch (err) {
       console.error('Error applying for internship:', err);
-      // Show error message
+      
+      if (err.response) {
+        // Handle different error responses
+        if (err.response.status === 400) {
+          if (err.response.data.screening_answers) {
+            setApplicationError('Please answer all screening questions.');
+          } else {
+             setApplicationError(`Bad request: ${JSON.stringify(err.response.data)}`);
+          }
+        } else if (err.response.status === 403) {
+          if (err.response.data.detail === 'Only candidates can complete this action.') {
+            setApplicationError('Only candidates can apply for internships.');
+          } else if (err.response.data.detail === 'You have already applied to this job.') {
+            setApplicationError('You have already applied to this internship.');
+          } else {
+            setApplicationError('You are not authorized to perform this action.');
+          }
+        } else if (err.response.status === 404) {
+          setApplicationError('Internship not found.');
+        } else {
+          setApplicationError('Failed to submit application. Please try again.');
+        }
+      } else {
+        setApplicationError('Network error. Please check your connection and try again.');
+      }
     } finally {
       setIsApplying(false);
     }
@@ -297,6 +368,20 @@ function InternshipDetails() {
                   </div>
                 )}
 
+                {internship.screening_questions && internship.screening_questions.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Screening questions:</h3>
+                    <ul className="space-y-1">
+                      {internship.screening_questions.map((question, idx) => (
+                        <li key={idx} className="text-sm text-gray-700 flex items-start">
+                          <span className="w-1 h-1 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                          {question}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {internship.candidate_preferences && (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-900 mb-2">Candidate preferences:</h3>
@@ -397,29 +482,91 @@ function InternshipDetails() {
                     Browse More Internships
                   </button>
                 </div>
+              ) : showScreeningQuestions ? (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-3">Screening Questions</h2>
+                  <p className="text-xs text-gray-600 mb-4">Please answer the following questions to complete your application.</p>
+                  
+                  {applicationError && (
+                    <div className="mb-4 p-2 bg-red-50 text-red-600 text-sm rounded">
+                      {applicationError}
+                    </div>
+                  )}
+                  
+                  <div className="space-y-4 mb-4">
+                    {internship.screening_questions.map((question, index) => (
+                      <div key={index}>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {question}
+                        </label>
+                        <textarea
+                          value={screeningAnswers[index] || ''}
+                          onChange={(e) => handleAnswerChange(index, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                          rows={3}
+                          required
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setShowScreeningQuestions(false)}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleApply}
+                      disabled={isApplying}
+                      className="flex-1 py-2 px-4 bg-gradient-to-r from-indigo-600 to-teal-600 text-white font-semibold rounded-lg shadow hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center text-sm"
+                    >
+                      {isApplying ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Submit Application
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <h2 className="text-lg font-semibold text-gray-900 mb-3">Apply for this internship</h2>
                   <p className="text-xs text-gray-600 mb-4">Submit your application now to be considered for this position.</p>
-                  
-                  <button
-                    onClick={handleApply}
-                    disabled={isApplying}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg shadow hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center text-sm"
-                  >
-                    {isApplying ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Apply now
-                      </>
-                    )}
-                  </button>
-                  
+                  {internship.application_status === null ? (
+                    <button
+                      onClick={handleApplyClick}
+                      disabled={isApplying}
+                      className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-teal-600 text-white font-semibold rounded-lg shadow hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center text-sm"
+                    >
+                      {isApplying ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Apply now
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="w-full py-3 px-4 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow text-sm cursor-not-allowed"
+                      onClick={() => toast.info('Already applied to this internship')}
+                    >
+                      Applied
+                    </button>
+                  )}
                   {!isAuthenticated && (
                     <p className="text-xs text-gray-500 mt-2 text-center">
                       You'll need to log in or create an account to apply
@@ -494,6 +641,7 @@ function InternshipDetails() {
           </div>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }

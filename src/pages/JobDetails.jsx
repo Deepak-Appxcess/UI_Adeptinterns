@@ -24,6 +24,8 @@ import {
   Shield
 } from 'lucide-react';
 import api from '../services/api';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function JobDetails() {
   const { id } = useParams();
@@ -445,7 +447,7 @@ const handleApplyClick = async () => {
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Apply Now Card */}
-                     <motion.div
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-lg shadow p-4 sticky top-4"
@@ -522,25 +524,33 @@ const handleApplyClick = async () => {
                 <>
                   <h2 className="text-lg font-semibold text-gray-900 mb-3">Apply for this job</h2>
                   <p className="text-xs text-gray-600 mb-4">Submit your application now to be considered for this position.</p>
-                  
-                  <button
-                    onClick={handleApplyClick}
-                    disabled={isApplying}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg shadow hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center text-sm"
-                  >
-                    {isApplying ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Apply now
-                      </>
-                    )}
-                  </button>
-                  
+                  {job.application_status === null ? (
+                    <button
+                      onClick={handleApplyClick}
+                      disabled={isApplying}
+                      className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg shadow hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center text-sm"
+                    >
+                      {isApplying ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Apply now
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="w-full py-3 px-4 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow text-sm cursor-not-allowed"
+                      onClick={() => toast.info('Already applied to this job')}
+                    >
+                      Applied
+                    </button>
+                  )}
                   {!isAuthenticated && (
                     <p className="text-xs text-gray-500 mt-2 text-center">
                       You'll need to log in or create an account to apply
@@ -615,6 +625,7 @@ const handleApplyClick = async () => {
           </div>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }

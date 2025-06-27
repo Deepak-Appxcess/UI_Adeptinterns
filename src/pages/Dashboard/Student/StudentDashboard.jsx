@@ -86,7 +86,7 @@ const StudentDashboard = () => {
   // Loading and error states
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
+      <div className="flex justify-center items-center h-screen ">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#18005F] mx-auto"></div>
           <p className="mt-4 text-sm font-medium text-gray-600">Loading your dashboard...</p>
@@ -97,7 +97,7 @@ const StudentDashboard = () => {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
+      <div className="flex justify-center items-center h-screen ">
         <div className="text-center bg-white p-8 rounded-xl shadow-lg border border-gray-100">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
@@ -128,7 +128,7 @@ const StudentDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       {/* Professional attention banner for incomplete profile */}
       {(!profile.has_completed_bio || !profile.has_completed_preferences) && (
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200">

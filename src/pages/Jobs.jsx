@@ -17,6 +17,8 @@ import {
   Bookmark
 } from 'lucide-react';
 import api from '../services/api';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
@@ -151,7 +153,8 @@ function Jobs() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br py-8">
+      <ToastContainer />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -473,12 +476,22 @@ function Jobs() {
                         >
                           More details <ChevronDown className="w-4 h-4 ml-1" />
                         </Link>
-                        <Link
-                          to={`/job/${job.id}`}
-                          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-                        >
-                          Apply Now
-                        </Link>
+                        {job.application_status === null ? (
+                          <Link
+                            to={`/job/${job.id}`}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                          >
+                            Apply Now
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm font-medium cursor-not-allowed"
+                            onClick={() => toast.info('Already applied to this job')}
+                          >
+                            Applied
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
