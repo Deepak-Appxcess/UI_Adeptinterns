@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const projects = [
   {
     title: '📚 Courses',
-    link: './images/Internships.png', // Replace with actual course image path
+    link: './images/COURSE1.png', // Replace with actual course image path
     color: '#4e6fb1d1', // Light blue
   },
   {

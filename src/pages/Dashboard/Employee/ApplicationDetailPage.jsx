@@ -19,7 +19,8 @@ import {
   MapPin,
   Calendar,
   Clock,
-  ChevronDown
+  ChevronDown,
+  Loader2
 } from 'lucide-react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -30,7 +31,6 @@ import 'react-datepicker/dist/react-datepicker.css';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const statusOptions = [
-  { value: 'APPLIED', label: 'Applied', color: 'bg-gray-400' },
   { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-blue-500' },
   { value: 'SHORTLISTED', label: 'Shortlisted', color: 'bg-purple-500' },
   { value: 'REJECTED', label: 'Rejected', color: 'bg-red-500' },
@@ -474,263 +474,145 @@ const ApplicationDetailPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate(-1)}
-                className="flex items-center mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-[#18005F]" />
-              </motion.button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Application Details</h1>
-                <p className="text-gray-600 text-sm">Review candidate information</p>
-              </div>
-            </div>
-            
-            {!isEditing ? (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsEditing(true)}
-                className="flex items-center px-4 py-2 border border-[#18005F] text-[#18005F] rounded-lg hover:bg-[#18005F]/10 transition-colors"
-              >
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit Status
-              </motion.button>
+      <div className="border-b border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex items-center space-x-6">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate(-1)}
+            className="flex items-center mr-4 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-[#18005F]" />
+          </motion.button>
+          <div className="relative">
+            {application.candidate_profile?.profile_picture_url ? (
+              <img
+                src={application.candidate_profile.profile_picture_url}
+                alt={renderCandidateName()}
+                className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+              />
             ) : (
-              <div className="flex space-x-3">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    setIsEditing(false);
-                    setStatus(application.status);
-                  }}
-                  className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setOpenDialog(true)}
-                  className="flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Save Changes
-                </motion.button>
+              <div className="w-20 h-20 rounded-full bg-[#18005F] text-white flex items-center justify-center text-2xl font-bold border-4 border-white shadow-lg">
+                {renderCandidateName().charAt(0).toUpperCase() || 'U'}
               </div>
             )}
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{renderCandidateName()}</h1>
+            <p className="text-gray-600 mt-1">{application.candidate_email}</p>
+            <div className="flex items-center space-x-4 mt-2">
+              {application.candidate_profile?.current_city && (
+                <span className="flex items-center text-sm text-gray-500">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {application.candidate_profile.current_city}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="ml-auto flex items-center">
+            {renderStatusChart()}
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
-        >
-          {/* Candidate Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex flex-col md:flex-row md:items-center">
-              <div className="flex items-center mb-4 md:mb-0 md:mr-6">
-                <div className="relative">
-                  <img
-                    src={application.candidate_profile?.profile_picture_url || ''}
-                    alt={renderCandidateName()}
-                    className="w-20 h-20 rounded-full object-cover border-2 border-[#18005F]/20"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '';
-                      e.target.className = 'w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-400 border-2 border-[#18005F]/20';
-                      e.target.textContent = renderCandidateName().charAt(0) || '?';
+        {/* Screening Questions Section (if any) */}
+        {application.screening_answers?.length > 0 && (
+          <div className="mb-8">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <Award className="w-5 h-5 mr-2 text-[#18005F]" />
+                Screening Questions
+              </h3>
+              <div className="space-y-4">
+                {application.screening_answers.map((answer, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-100 flex items-start">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#18005F]/10 text-[#18005F] font-medium mr-3 flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="text-gray-800 font-semibold mb-1">{application.screening_questions?.[index] || `Question ${index + 1}`}</p>
+                      <p className="text-gray-700">{answer || 'No answer provided'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Card */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* Application Status Section */}
+          <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <label className="block text-sm font-medium text-gray-700">Application Status</label>
+              {isEditing ? (
+                <select
+                  value={status}
+                  onChange={handleStatusChange}
+                  className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#18005F]/20 focus:border-[#18005F] text-sm"
+                >
+                  {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(application.status)} text-white`}>
+                  {statusOptions.find(opt => opt.value === application.status)?.label || application.status}
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 mt-4 md:mt-0">
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center px-4 py-2 border border-[#18005F] text-[#18005F] rounded-lg hover:bg-[#18005F]/10 transition-colors"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Edit Status
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setStatus(application.status);
                     }}
-                  />
-                  {renderStatusChart()}
-                </div>
-                <div className="ml-4">
-                  <h2 className="text-xl font-bold text-gray-900">{renderCandidateName()}</h2>
-                  <div className="flex items-center text-gray-600 text-sm mt-1">
-                    <Mail className="w-4 h-4 mr-1" />
-                    <span>{application.candidate_email || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm mt-1">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span>{application.candidate_profile?.current_city || 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-gray-500 text-sm">Position</p>
-                  <p className="font-medium">
-                    {application.job_title || application.internship_title || 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-gray-500 text-sm">Candidate Type</p>
-                  <p className="font-medium">
-                    {application.candidate_profile?.candidate_type || 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-gray-500 text-sm">Applied On</p>
-                  <p className="font-medium">
-                    {formatDate(application.applied_at)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Status Selector (Editing) */}
-          {isEditing && (
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <div className="max-w-md">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Application Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={status}
-                    onChange={handleStatusChange}
-                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-[#18005F] focus:border-[#18005F] rounded-lg"
+                    className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    {statusOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
-                  </div>
-                </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  Current status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(application.status)} text-white`}>
-                    {application.status}
-                  </span>
-                </p>
-              </div>
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setOpenDialog(true)}
+                    className="flex items-center px-4 py-2 bg-[#18005F] text-white rounded-lg hover:bg-[#18005F]/90 transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </button>
+                </>
+              )}
             </div>
-          )}
-
-          {/* Content Sections */}
-          <div className="p-6">
-            {application.resume?.career_objective && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Career Objective</h3>
-                <p className="text-gray-700">{application.resume.career_objective}</p>
-              </div>
-            )}
-
-            {renderEducation()}
-            {renderWorkExperience()}
-            {renderSkills()}
-            {renderAcademicProjects()}
-
-            {application.resume?.extra_curricular_activities?.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Trophy className="w-5 h-5 mr-2 text-[#18005F]" />
-                  Extra Curricular Activities
-                </h3>
-                <div className="space-y-2">
-                  {application.resume.extra_curricular_activities.map((activity, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-gray-700">{activity.description || 'Activity'}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {application.resume?.trainings_courses?.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <GraduationCap className="w-5 h-5 mr-2 text-[#18005F]" />
-                  Trainings & Courses
-                </h3>
-                <div className="space-y-4">
-                  {application.resume.trainings_courses.map((course, index) => (
-                    <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
-                      <h4 className="font-medium text-gray-900">
-                        {course.training_program || 'Training Program'}
-                      </h4>
-                      <p className="text-gray-600 text-sm mt-1">
-                        {course.organization && `Organization: ${course.organization}`}
-                      </p>
-                      <div className="flex items-center text-sm text-gray-500 mt-2">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        <span>
-                          {formatDate(course.start_date)} - {course.currently_ongoing ? 'Ongoing' : formatDate(course.end_date) || 'N/A'}
-                        </span>
-                      </div>
-                      {course.description && (
-                        <p className="mt-2 text-gray-600 text-sm">{course.description}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {application.resume?.portfolio_work_samples?.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Link2 className="w-5 h-5 mr-2 text-[#18005F]" />
-                  Portfolio Work Samples
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {application.resume.portfolio_work_samples.map((sample, index) => (
-                    <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
-                      <h4 className="font-medium text-gray-900">
-                        {sample.name || 'Work Sample'}
-                      </h4>
-                      <a 
-                        href={sample.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-[#18005F] text-sm mt-2 hover:underline"
-                      >
-                        <Link2 className="w-4 h-4 mr-1" />
-                        {sample.url.length > 30 ? `${sample.url.substring(0, 30)}...` : sample.url}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {application.resume?.accomplishments?.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Award className="w-5 h-5 mr-2 text-[#18005F]" />
-                  Accomplishments
-                </h3>
-                <div className="space-y-2">
-                  {application.resume.accomplishments.map((accomplishment, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-gray-700">{accomplishment.additional_details || 'Accomplishment'}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {renderScreeningAnswers()}
-            {renderOnlineProfiles()}
           </div>
-        </motion.div>
+
+          {/* Candidate Info & Details */}
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              {/* Education, Work Experience, Skills, Projects, Online Profiles */}
+              {renderEducation()}
+              {renderWorkExperience()}
+              {renderSkills()}
+              {renderAcademicProjects()}
+              {renderOnlineProfiles()}
+            </div>
+            <div>
+              {/* Additional Info, etc. */}
+              {/* You can add more sections here as needed */}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Confirmation Dialog */}
