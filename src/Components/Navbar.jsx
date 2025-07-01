@@ -130,7 +130,7 @@ function Navbar({ isDarkMode, toggleTheme }) {
 
   return (
     <>
-      <nav className={`flex justify-between items-center p-4 md:p-6 mx-4 md:mx-6 my-2 md:my-4 ${isDarkMode ? 'bg-black' : 'bg-white'} rounded-full transition-colors duration-300`}>
+      <nav className={`flex justify-between items-center p-4 md:p-6 mx-4 md:mx-6 my-2 md:my-4 ${isDarkMode ? 'bg-black' : 'bg-[rgb(174,178,191,0.18)]'} rounded-full transition-colors duration-300`}>
         {/* Logo Section */}
         <Link to="/" className={`flex items-center space-x-3 text-lg md:text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
           {/* Website Logo */}
@@ -223,7 +223,14 @@ function Navbar({ isDarkMode, toggleTheme }) {
                             <FileText className="w-4 h-4 mr-3 text-gray-400" />
                             My Applications
                           </Link>
-
+                          <Link
+                             to="/MyCourses"
+                            onClick={() => setShowProfileMenu(false)}
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <FileText className="w-4 h-4 mr-3 text-gray-400" /> 
+                            My Courses
+                          </Link>
                           <Link
                             to="/resume"
                             onClick={() => setShowProfileMenu(false)}

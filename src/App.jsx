@@ -27,7 +27,6 @@ import ApplicationViewPage from './pages/Dashboard/Employee/ApplicationViewPage'
 import Employeeprofile from './pages/Dashboard/Employee/Profile'
 import JobDetails from './pages/JobDetails'
 import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
-import axios from 'axios';
 import { fetchCourses } from './services/api'; // Adjust path if needed
 import api from './services/api';
 import ApplicationDetailPage from './pages/Dashboard/Employee/ApplicationDetailPage'
@@ -36,6 +35,7 @@ import ResumePage from './pages/Dashboard/Student/Resume/ResumePage'
 import MyApplications from './pages/Dashboard/Student/MyApplications'
 import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
 import InternshipUpdate from './pages/Dashboard/Employee/InternshipUpdate'
+import MyCourses from './pages/Dashboard/Student/Mycourses'
 
 
 // Protected Route Component
@@ -60,8 +60,9 @@ function App() {
     const getFeaturedCourses = async () => {
       try {
         const response = await fetchCourses(); // from api.js
-        const courses = response.data.data.slice(0, 3); // first 3 featured
-        setFeaturedCourses(courses);
+        // Use the new API response format (array of courses)
+        const courses = Array.isArray(response.data) ? response.data : response.data?.results || [];
+        setFeaturedCourses(courses.slice(0, 4)); // show only 4
       } catch (error) {
         console.error('Error fetching featured courses:', error);
       }
@@ -167,7 +168,7 @@ function App() {
      <GoogleOAuthProvider clientId="380706120194-tlm6ibu4b4jun9tssfgpcgib1mkflqir.apps.googleusercontent.com">
     <Router>
       <div className={`min-h-screen ${isDarkMode ? 'bg-[#0A0A0A]' : 'bg-gray-100'} transition-colors duration-300`}>
-<div className={`${isDarkMode ? 'bg-black border-white/10' : 'bg-[rgb(174,178,191,0.18)] border-black/10'}  min-h-[calc(100vh-2rem)] overflow-hidden border transition-colors duration-300`}>
+<div className={`${isDarkMode ? 'bg-black border-white/10' : 'bg-[white] border-black/10'}  min-h-[calc(100vh-2rem)] overflow-hidden border transition-colors duration-300`}>
           <Navbar 
             isDarkMode={isDarkMode} 
             toggleTheme={toggleTheme} 
@@ -256,7 +257,7 @@ function App() {
               </ProtectedRoute> 
             } />
 
-         
+<Route path="/MyCourses" element={<MyCourses/>} />    
 <Route path="/applications" element={<ApplicationViewPage />} />
 <Route path="/applications/jobs" element={<ApplicationViewPage />} />
 <Route path="/applications/internships" element={<ApplicationViewPage />} />
@@ -946,61 +947,42 @@ function Home({
           View all →
         </Link>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {featuredCourses.map((course) => {
-          const content = typeof course.content === 'string'
-            ? JSON.parse(course.content)
-            : course.content;
-
-          const imageURL = `${api.defaults.baseURL}/adept/${course._id}/image`;
-
-          return (
-            <div
-              key={course._id}
-              className={`${
-                isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'
-
-              } rounded-xl p-6 hover:scale-[1.02] transition-transform`}
-            >
-              <div className="h-48 rounded-lg overflow-hidden mb-4">
-                <img
-                  src={imageURL}
-                  alt={content?.courseTitle || 'Course image'}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src =
-                      'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg';
-                  }}
-                />
-              </div>
-
-              <h3 className="text-xl font-semibold mb-2">
-                {content?.courseTitle || 'Untitled Course'}
-              </h3>
-
-              <div className="text-xl font-semibold text-purple-600 mb-3">
-                {course.price ? `$${course.price}` : 'Free'}
-              </div>
-
-              <p
-                className={`${
-                  isDarkMode ? 'text-white/70' : 'text-black/70'
-                } mb-4 text-sm line-clamp-3`}
-              >
-                {content?.summary || 'No summary available.'}
-              </p>
-
-              <Link
-                to={`/courses/${course._id}`}
-                className="text-blue-500 hover:text-blue-600"
-              >
-                Know more →
-              </Link>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {featuredCourses.length > 0 ? featuredCourses.map((course) => (
+          <div
+            key={course.id}
+            className={`${isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}
+          >
+            <div className="h-32 rounded-lg overflow-hidden mb-4 flex items-center justify-center bg-gray-100">
+              <img
+                src={course.course_banner_image || 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg'}
+                alt={course.title || 'Course image'}
+                className="max-h-full max-w-full object-contain"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg';
+                }}
+              />
             </div>
-          );
-        })}
+            <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
+            <div className="text-md font-semibold text-purple-600 mb-2">
+              {course.price ? `₹${course.price}` : 'Free'}
+            </div>
+            <div className="mb-2 text-sm">
+              Status: <span className={course.status === 'open' ? 'text-green-600' : 'text-red-600'}>{course.status}</span>
+            </div>
+            <button
+              onClick={() => window.location.href = `/courses/${course.id}`}
+              className="mt-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+            >
+              View
+            </button>
+          </div>
+        )) : (
+          <div className="col-span-4 text-center py-8">
+            <p className={`${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>No courses available at the moment.</p>
+          </div>
+        )}
       </div>
     </section>
 

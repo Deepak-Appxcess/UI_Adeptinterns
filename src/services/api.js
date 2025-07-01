@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'http://127.0.0.1:8000/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
@@ -170,32 +170,35 @@ export const verifyPhoneOTP = (data) => {
 };
 
 // ================= Course Endpoints =================
-export const fetchCourses = (query = '') => {
-  const url = query 
-    ? `/adept/search?query=${encodeURIComponent(query)}`
-    : '/users/adept/';
-  return api.get(url);
+// api.js
+export const fetchCourses = (params = {}) => {
+  return api.get('/courses/', { params });
 };
 
-export const fetchCourseById = (id) => api.get(`/adept/${id}/`);
+export const fetchCourseDetails = (id) => {
+  return api.get(`/courses/${id}/`);
+};
+
+export const fetchCourseById = (id) => api.get(`/courses/${id}/`);
 export const fetchCourseImage = (id) => api.get(`/adept/${id}/image/`, {
   responseType: 'blob'
 });
 
-export const createCourse = (data) => {
-  const formData = new FormData();
-  formData.append('content', data.content);
-  formData.append('price', data.price);
-  if (data.image) {
-    formData.append('image', data.image);
-  }
-  return api.post('/users/adept/', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  });
+
+
+export const enrollInCourse = (data) => {
+  return api.post('/courses/enroll/', data);
 };
 
+export const initiatePayment = (data) => {
+  return api.post('/courses/payment/', data);
+};
+// services/api.js
+
+export const fetchCandidateCourses = async () => {
+  const response = await api.get('/courses/candidate/dashboard/');
+  return response.data;
+};
 export const updateCourse = (id, data) => api.patch(`/adept/${id}/`, data);
 export const deleteCourse = (id) => api.delete(`/adept/${id}/`);
 
