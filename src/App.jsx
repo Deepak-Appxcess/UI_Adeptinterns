@@ -35,7 +35,7 @@ import ResumePage from './pages/Dashboard/Student/Resume/ResumePage'
 import MyApplications from './pages/Dashboard/Student/MyApplications'
 import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
 import InternshipUpdate from './pages/Dashboard/Employee/InternshipUpdate'
-import MyCourses from './pages/Dashboard/Student/MyCourses'
+import MyCourses from './pages/Dashboard/Student/Mycourses'
 
 
 // Protected Route Component
