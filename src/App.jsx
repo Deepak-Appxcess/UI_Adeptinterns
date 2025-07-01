@@ -35,7 +35,7 @@ import ResumePage from './pages/Dashboard/Student/Resume/ResumePage'
 import MyApplications from './pages/Dashboard/Student/MyApplications'
 import UpdateJob from './pages/Dashboard/Employee/UpdateJob'
 import InternshipUpdate from './pages/Dashboard/Employee/InternshipUpdate'
-import MyCourses from './pages/Dashboard/Student/Mycourses'
+import MyCourses from './pages/Dashboard/Student/MyCourses'
 
 
 // Protected Route Component
@@ -951,32 +951,65 @@ function Home({
         {featuredCourses.length > 0 ? featuredCourses.map((course) => (
           <div
             key={course.id}
-            className={`${isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'} rounded-xl p-6 hover:scale-[1.02] transition-transform`}
+            className={`${isDarkMode ? 'bg-white/5' : 'bg-[#f8f9fa]'} rounded-xl overflow-hidden hover:scale-[1.02] transition-transform shadow-lg`}
           >
-            <div className="h-32 rounded-lg overflow-hidden mb-4 flex items-center justify-center bg-gray-100">
-              <img
-                src={course.course_banner_image || 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg'}
-                alt={course.title || 'Course image'}
-                className="max-h-full max-w-full object-contain"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg';
-                }}
-              />
+            <div className="h-40 overflow-hidden relative">
+              {course.course_banner_image ? (
+                <img
+                  src={course.course_banner_image}
+                  alt={course.title || 'Course image'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg';
+                  }}
+                />
+              ) : (
+                <img
+                  src="https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg"
+                  alt="Default course image"
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <div className="absolute top-2 right-2">
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                  course.status === 'open' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {course.status === 'open' ? 'Open' : 'Closed'}
+                </span>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
-            <div className="text-md font-semibold text-purple-600 mb-2">
-              {course.price ? `₹${course.price}` : 'Free'}
+            <div className="p-5">
+              <h3 className="text-lg font-semibold mb-2 line-clamp-2">{course.title}</h3>
+              <div className="flex justify-between items-center mb-3">
+                <div className="text-md font-bold text-purple-600">
+                  {course.price ? `₹${parseFloat(course.price).toLocaleString('en-IN')}` : 'Free'}
+                </div>
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                  course.course_type === 'group' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-purple-100 text-purple-800'
+                }`}>
+                  {course.course_type === 'group' ? 'Group' : 'One-to-One'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm mb-4">
+                <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <span>{course.available_seats} seats left</span>
+                </div>
+                <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <span>{course.total_enrolled} enrolled</span>
+                </div>
+              </div>
+              <Link
+                to={`/courses/${course.id}`}
+                className="block w-full text-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                View Details
+              </Link>
             </div>
-            <div className="mb-2 text-sm">
-              Status: <span className={course.status === 'open' ? 'text-green-600' : 'text-red-600'}>{course.status}</span>
-            </div>
-            <button
-              onClick={() => window.location.href = `/courses/${course.id}`}
-              className="mt-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
-            >
-              View
-            </button>
           </div>
         )) : (
           <div className="col-span-4 text-center py-8">
